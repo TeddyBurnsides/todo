@@ -384,11 +384,11 @@ class LogIn extends React.Component {
                 <input 
                     ref={this.username}
                     type="text" 
-                    placeholder="Email"
+                    placeholder="Username"
                 />
                 <input 
                     ref={this.password}
-                    type="password" 
+                    type="Password" 
                     placeholder="Password"
                 />
                 <button onClick={(e) => this.props.logIn(e,this.username.current.value,this.password.current.value)}>Log In</button>
@@ -412,12 +412,12 @@ class SignUp extends React.Component {
                 <p><Loader waitFlag={this.props.signUpBanner.show} msg={this.props.signUpBanner.msg} /></p>
                 <input 
                     type="text"
-                    placeholder="username"
+                    placeholder="Username"
                     ref={this.username}
                 />
                 <input 
                     type="password"
-                    placeholder="password"
+                    placeholder="Password"
                     ref={this.password}
                 />
                 <button onClick={(e) => this.props.signUp(e,this.username.current.value,this.password.current.value)}>Sign Up</button>
