@@ -4,7 +4,8 @@ import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Connection
 const app = new Realm.App({ id: "todo-app-mnupq", timeout: 10000 });
-const mongoCol = app.services.mongodb('mongodb-atlas').db('data').collection('tasks');
+const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db('data').collection('tasks');
+const mongoUserCollection = app.services.mongodb('mongodb-atlas').db('data').collection('users');
 
 // Main Wrapper
 class App extends React.Component {
@@ -35,7 +36,7 @@ class App extends React.Component {
             // anonymous function to retrieve tasks from server when page loads
             (async () => {
                 try {
-                    const tasks = await mongoCol.find({user:this.state.user.id}); // find non-deleted tasks
+                    const tasks = await mongoTaskCollection.find({user:this.state.user.id}); // find non-deleted tasks
                     this.setState({tasks:tasks})
                     // finish task loading animation
                     this.setState({loadingTasks:false});
@@ -60,7 +61,7 @@ class App extends React.Component {
             // server operations
             try {
                 // add new tasks to server 
-                const newID = await mongoCol.insertOne({
+                const newID = await mongoTaskCollection.insertOne({
                     title:taskTitle,
                     status:true,
                     complete:false,
@@ -101,7 +102,7 @@ class App extends React.Component {
                     return {tasks:state.tasks}
                 });
                 // update task on server
-                await mongoCol.updateOne(
+                await mongoTaskCollection.updateOne(
                     {_id: new bson.ObjectId(id)},
                     {$set: {'complete': !status}} // toggle true/false flag
                 );
@@ -119,7 +120,7 @@ class App extends React.Component {
                     return {tasks:state.tasks}
                 });
                 // update server
-                await mongoCol.updateOne(
+                await mongoTaskCollection.updateOne(
                     {_id: new bson.ObjectId(id)},
                     {$set: {'title': newTitle}} // toggle true/false flag
                 );
@@ -137,7 +138,7 @@ class App extends React.Component {
                     return {tasks:state.tasks}
                 });
                 // remove tasks on server
-                await mongoCol.deleteOne(
+                await mongoTaskCollection.deleteOne(
                     {_id: new bson.ObjectId(id)}
                 );
             } catch {
@@ -175,7 +176,7 @@ class App extends React.Component {
                 // get posts from server
                 (async () => {
                     try {
-                        const tasks = await mongoCol.find({user:this.state.user.id}); // find non-deleted tasks
+                        const tasks = await mongoTaskCollection.find({user:this.state.user.id}); // find non-deleted tasks
                         this.setState({tasks:tasks})
                         // finish task loading animation
                         this.setState({loadingTasks:false});
@@ -217,6 +218,21 @@ class App extends React.Component {
             if (password.length >= 6) return false; // is valid
             return true; // is not valid
         }
+        const updateUserName = async (event,userId,newName) => {
+
+            event.preventDefault();
+            console.log(userId);
+            console.log(newName);
+            try {
+                await mongoUserCollection.updateOne(
+                    {_id: userId},
+                    {$set: {'prettyName': newName}} // update user's name
+                );
+            } catch {
+                console.log('failed to update user name.');
+            }
+            
+        }
         // if logged in
         if (this.state.user) {
             return (
@@ -229,7 +245,11 @@ class App extends React.Component {
                         loadingTasks={this.state.loadingTasks}
                         saveEditedTask={saveEditedTask}
                     />    
-                <button onClick={() => logout()}>Log Out</button>
+                    <UserProfile 
+                        updateUserName={updateUserName}
+                        user={this.state.user}
+                    />
+                    <button onClick={() => logout()}>Log Out</button>
                 </div>  
             );
         // if not logged in
@@ -250,6 +270,43 @@ class App extends React.Component {
         }
     }
 }
+// Edit user information
+class UserProfile extends React.Component {
+    constructor(props) {
+        super();
+        this.state = {
+            userInfo:''
+        }
+        this.prettyUserName = React.createRef();
+    }
+    componentDidMount() {
+        // load custom user data
+        try {
+            (async () => {
+                const userInfo = await mongoUserCollection.findOne({_id:this.props.user.id});
+                this.setState({userInfo:userInfo});
+            })();
+        } catch {
+            console.log('Failed to load user info.');
+        }
+        
+    }
+    render() {
+        return (
+            <form>
+                <h2>Hello, {this.state.userInfo.prettyName}</h2>
+                <label>Name</label>
+                <input
+                    type="text"
+                    defaultValue={this.state.userInfo.prettyName}
+                    ref={this.prettyUserName}
+                />
+                <button onClick={(e) => this.props.updateUserName(e,this.props.user.id,this.prettyUserName.current.value)}>Save Changes</button>
+            </form>
+        );
+    }
+}
+
 // Full task list (composed of many Task components)
 class TaskList extends React.Component {
     render() {    
@@ -417,7 +474,7 @@ class SignUp extends React.Component {
                 />
                 <input 
                     type="password"
-                    placeholder="Password"
+                    placeholder="Password (6+ char. min)"
                     ref={this.password}
                 />
                 <button onClick={(e) => this.props.signUp(e,this.username.current.value,this.password.current.value)}>Sign Up</button>
