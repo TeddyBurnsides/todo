@@ -292,13 +292,14 @@ class UserProfile extends React.Component {
         
     }
     render() {
+        const userPrettyName = this.state.userInfo?.prettyName;
         return (
             <form>
-                <h2>Hello, {this.state.userInfo.prettyName}</h2>
+                <h2>Edit User Info</h2>
                 <label>Name</label>
                 <input
                     type="text"
-                    defaultValue={this.state.userInfo.prettyName}
+                    defaultValue={userPrettyName}
                     ref={this.prettyUserName}
                 />
                 <button onClick={(e) => this.props.updateUserName(e,this.props.user.id,this.prettyUserName.current.value)}>Save Changes</button>
