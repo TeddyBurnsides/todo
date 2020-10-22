@@ -13,18 +13,13 @@ class App extends React.Component {
         super();
         // state holds things require page updates when changed
         this.state = {
-            tasks:[], // contains all tasks
-            user:'',//app.currentUser, // info from the currently logged in user
-            addingTask:false, // flag while we add task to server
-            loadingTasks:false, // flag while we wait for tasks from server
-            signUpBanner: { // sign up warnings/success
-                show:true,
-                msg:'Password must be greater than 6 characters long.'
-            },
-            logInBanner: { // log in warnings
-                show:false,
-                msg:''
-            }
+            tasks:[],
+            user:'', // user ID
+            addingTask:false,
+            loadingTasks:false,
+            profileBanner: {show:false,msg:''},
+            signUpBanner: {show:false,msg:''},
+            logInBanner: {show:false,msg:''}
         }
     }
     // fetch task list when reloading
@@ -232,12 +227,16 @@ class App extends React.Component {
         const updateUserName = async (event,userId,newName) => {
             // stop page refresh
             event.preventDefault();
+            // in progress banner
+            this.setState({profileBanner: {show:true, msg:'Changing Name...'}})
             // server ops
             try {
                 await mongoUserCollection.updateOne(
                     {_id: userId},
                     {$set: {'prettyName': newName}} // update user's name
                 );
+                // success banner
+                this.setState({profileBanner: {show: true, msg:'Name Changed!'}})
             } catch {
                 console.log('failed to update user name.');
             }
@@ -258,6 +257,7 @@ class App extends React.Component {
                     <UserProfile 
                         updateUserName={updateUserName}
                         user={this.state.user}
+                        profileBanner={this.state.profileBanner}
                     />
                     <button onClick={() => logout()}>Log Out</button>
                 </div>  
@@ -314,6 +314,7 @@ class UserProfile extends React.Component {
                     ref={this.prettyUserName}
                 />
                 <button onClick={(e) => this.props.updateUserName(e,this.props.user,this.prettyUserName.current.value)}>Save Changes</button>
+                <Loader  waitFlag={this.props.profileBanner.show} msg={this.props.profileBanner.msg} />
             </form>
         );
     }
