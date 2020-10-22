@@ -71,7 +71,7 @@ class App extends React.Component {
                     title:taskTitle,
                     status:true,
                     complete:false,
-                    user:this.state.user.id
+                    user:this.state.user
                 });
                 // update state with new task (for real time updates on page)
                 this.setState((state) => {
@@ -230,10 +230,9 @@ class App extends React.Component {
             return true; // is not valid
         }
         const updateUserName = async (event,userId,newName) => {
-
+            // stop page refresh
             event.preventDefault();
-            console.log(userId);
-            console.log(newName);
+            // server ops
             try {
                 await mongoUserCollection.updateOne(
                     {_id: userId},
@@ -314,7 +313,7 @@ class UserProfile extends React.Component {
                     defaultValue={userPrettyName}
                     ref={this.prettyUserName}
                 />
-                <button onClick={(e) => this.props.updateUserName(e,this.props.user.id,this.prettyUserName.current.value)}>Save Changes</button>
+                <button onClick={(e) => this.props.updateUserName(e,this.props.user,this.prettyUserName.current.value)}>Save Changes</button>
             </form>
         );
     }
