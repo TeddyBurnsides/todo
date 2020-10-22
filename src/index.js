@@ -14,7 +14,7 @@ class App extends React.Component {
         // state holds things require page updates when changed
         this.state = {
             tasks:[], // contains all tasks
-            user:app.currentUser, // info from the currently logged in user
+            user:'',//app.currentUser, // info from the currently logged in user
             addingTask:false, // flag while we add task to server
             loadingTasks:false, // flag while we wait for tasks from server
             signUpBanner: { // sign up warnings/success
@@ -29,14 +29,20 @@ class App extends React.Component {
     }
     // fetch task list when reloading
     componentDidMount() {
-        // if you're logged in
-        if (this.state.user) {
+        // get user from local storage
+        const user = localStorage.getItem('user')
+        // restore state
+        this.setState({user:user});
+        // if we're logged in, then attempt to load posts
+        if (user) {
             // start task loading animation
             this.setState({loadingTasks:true});
             // anonymous function to retrieve tasks from server when page loads
             (async () => {
-                try {
-                    const tasks = await mongoTaskCollection.find({user:this.state.user.id}); // find non-deleted tasks
+                try {   
+                    // get tasks associated with current user
+                    const tasks = await mongoTaskCollection.find({user:user});
+                    // load tasks to state
                     this.setState({tasks:tasks})
                     // finish task loading animation
                     this.setState({loadingTasks:false});
@@ -85,9 +91,12 @@ class App extends React.Component {
         }
         const logout = async () => {
             try {
-                await app.currentUser.logOut().then(this.setState({
+                // log out 
+                await app.currentUser?.logOut().then(this.setState({
                     user:''
                 }));
+                // clear local storage
+                localStorage.setItem('user','');
             } catch {
                 console.log('Unable to Log out');
             }
@@ -162,7 +171,9 @@ class App extends React.Component {
               // Authenticate the user
               user = await app.logIn(credentials);
               // update state to trigger page refresh
-              this.setState({user:user});
+              this.setState({user:user.id});
+              // save off to local storage so it will persist on refresh
+              localStorage.setItem('user',this.state.user)
               // reset any warnings messages
               this.setState({logInBanner:{show:false},signUpBanner:{show:false}})
             } catch {
@@ -176,7 +187,7 @@ class App extends React.Component {
                 // get posts from server
                 (async () => {
                     try {
-                        const tasks = await mongoTaskCollection.find({user:this.state.user.id}); // find non-deleted tasks
+                        const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
                         this.setState({tasks:tasks})
                         // finish task loading animation
                         this.setState({loadingTasks:false});
@@ -281,9 +292,10 @@ class UserProfile extends React.Component {
     }
     componentDidMount() {
         // load custom user data
+        if (!this.props.user) return false;
         try {
             (async () => {
-                const userInfo = await mongoUserCollection.findOne({_id:this.props.user.id});
+                const userInfo = await mongoUserCollection.findOne({_id:this.props.user});
                 this.setState({userInfo:userInfo});
             })();
         } catch {
@@ -371,8 +383,7 @@ class Task extends React.Component {
                             ref={this.newTitle}
                         />
                         <button onClick={(e) => saveEditedTaskWrapper(e,id,this.newTitle)}>Save</button>
-                    </form>
-                    <button onClick={() => this.props.deleteTask(id)}>Delete</button>
+                    </form>           
                 </li>    
             );
         } else {
@@ -385,6 +396,7 @@ class Task extends React.Component {
                         completeTask={this.props.completeTask}
                     />
                     <button onClick={() => toggleEditMode()}>Edit</button>
+                    <button onClick={() => this.props.deleteTask(id)}>Delete</button>
                 </li>
             );
         }  
