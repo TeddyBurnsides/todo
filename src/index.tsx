@@ -1,4 +1,4 @@
-import React, { createRef, Ref } from 'react';
+import React, { createRef } from 'react';
 import ReactDOM from 'react-dom';
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
@@ -8,35 +8,32 @@ const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db('data').col
 const mongoUserCollection = app.services.mongodb('mongodb-atlas').db('data').collection('users');
 
 // Main Wrapper
-interface ISingleTask {
+interface ITask {
     _id: Object;
     complete: boolean;
     status: boolean;
     title: string;
     user: string;
 }
-interface IAppProps {}
 interface IAppState {
-    tasks: Array<ISingleTask>;
-    user: string | null;
-    msgBanner: {show:boolean, msg:string};
+    tasks: Array<ITask>;
+    user: string;
+    msgBanner: {show:boolean, msg?:string};
 }
-class App extends React.Component<IAppProps,IAppState> {
+class App extends React.Component<{},IAppState> {
     constructor(props: never) {
         super(props);
-        // state holds things that require page updates when modified
         this.state = {
             tasks:[],
             user:'',
-            msgBanner: {show:false,msg:''}
+            msgBanner: {show:false}
         }
     }
     // fetch task list when reloading
     componentDidMount() {
-        // get user from local storage
+        // get user from local storage and save to state
         const user = localStorage.getItem('user');
-        // restore state
-        this.setState({user:user});
+        user != null ? this.setState({user:user}) : console.log('User error');
         // if we're logged in, then attempt to load posts
         if (user) {
             // start task loading animation
@@ -50,35 +47,36 @@ class App extends React.Component<IAppProps,IAppState> {
                     this.setState({tasks:tasks})
                     // finish task loading animation
                     this.setState({msgBanner:{show:false,msg:''}});
-                } catch {
-                    return 'Failed to retrieve tasks';
+                } catch(error) {
+                    throw error;
                 }
             })();
         }
     }
     render() {
-        const addTask = async (event: React.MouseEvent<HTMLElement>,taskTitle: string) => {
+        const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string) => {
             // prevent page from refreshing
-            console.log(event);
             event.preventDefault(); 
             // starting loading animation
             this.setState({msgBanner:{show:true,msg:'Adding in progress'}});
-            // get value of input field
-            if (taskTitle == null) return false;
-            //taskTitle = taskTitle.current.value; 
-            // don't continue if empty
-            if (taskTitle==='') return false; 
-            // clear input fields in form
-            // @ts-ignore
-            document.getElementById('newTaskEntry').reset();
+            // don't continue if invalid task
+            if (isInvalidTask(taskTitle)) {
+                this.setState({msgBanner:{show:true,msg:'Invalid task'}});
+                return false;
+            }
             // server operations
             try {
-                // add new tasks to server 
+                // check for valid user info
+                if (this.state.user == null) {
+                    this.setState({msgBanner:{show:true,msg:'User error'}});
+                    return false;
+                }
+                // server operation
                 const newID = await mongoTaskCollection.insertOne({
                     title:taskTitle,
                     status:true,
                     complete:false,
-                    user:this.state.user != null ? this.state.user : ''
+                    user:this.state.user
                 });
                 // update state with new task (for real time updates on page)
                 this.setState((state) => {
@@ -87,30 +85,33 @@ class App extends React.Component<IAppProps,IAppState> {
                         title: taskTitle,
                         status: true,
                         complete: false,
-                        user:this.state.user != null ? this.state.user : ''
+                        user:this.state.user
                     });
                     return {tasks:state.tasks}
                 });
                 // clear loading animation
-                this.setState({msgBanner:{show:false,msg:''}});
-            } catch {
-                console.log('Adding task failed!');
+                this.setState({msgBanner:{show:false}});
+            } catch(error) {
+                throw(error);
             }
+        }
+        const isInvalidTask = (taskTitle: string|null) => {
+            if (taskTitle === '' || taskTitle == null) return true;
+            return false;
         }
         const logout = async () => {
             try {
-                // log out 
-                // @ts-ignore
-                await app.currentUser?.logOut().then(this.setState({
+                // server operation
+                await app.currentUser?.logOut().then(() => this.setState({
                     user:''
                 }));
-                // clear local storage
+                // clear local storage (stop "remembering" user info)
                 localStorage.setItem('user','');
-            } catch {
-                console.log('Unable to Log out');
+            } catch(error) {
+                throw(error);
             }
         }
-        const completeTask = async (id: string,status: string) => {
+        const completeTask = async (id: string, status: boolean) => {
             try {
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -124,11 +125,11 @@ class App extends React.Component<IAppProps,IAppState> {
                     {_id: new bson.ObjectId(id)},
                     {$set: {'complete': !status}} // toggle true/false flag
                 );
-            } catch {
-                console.log('Unable to complete task');
+            } catch(error) {
+                throw(error);
             }
         }
-        const saveEditedTask = async (id: string,newTitle: string) => {
+        const saveEditedTask = async (id: string, newTitle: string) => {
             try {                
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -163,37 +164,28 @@ class App extends React.Component<IAppProps,IAppState> {
                 console.log('Unable to delete Task.')
             }
         }
-        const logIn = async (event: any, username: React.Ref<HTMLInputElement>, password: React.Ref<HTMLInputElement>) => {
+        const logIn = async (event: any, username: string, password: string) => {
             // prevent page refresh
             event.preventDefault();
-            // extract values from refs
-            // @ts-ignore
-            const usernameString = username.current.value;
-            // @ts-ignore
-            const passwordString = password.current.value;
             // validate inputs else showing loading indicator
-            if (isInvalidUsername(usernameString) || isInvalidPassword(passwordString)) {
+            if (isInvalidUsername(username) || isInvalidPassword(password)) {
                 this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
                 return false;
             } else {
                 this.setState({msgBanner: {show:true,msg:'Logging in...'}});
             }
             // Create an anonymous credential
-            // @ts-ignore
-            console.log(usernameString,passwordString);
-            let credentials=Realm.Credentials.emailPassword(usernameString, passwordString);
+            let credentials=Realm.Credentials.emailPassword(username, password);
             let user = null;
             try {
-              // Authenticate the user
-             // @ts-ignore 
-
-              user = await app.logIn(credentials);
-              // update state to trigger page refresh
-              this.setState({user:user.id});
-              // save off to local storage so it will persist on refresh
-             if (this.state.user != null) localStorage.setItem('user',this.state.user)
-              // reset any warnings messages
-              this.setState({msgBanner:{show:false,msg:''}})
+                // Authenticate the user
+                user = await app.logIn(credentials);
+                // update state to trigger page refresh
+                this.setState({user:user.id});
+                // save off to local storage so it will persist on refresh
+                if (this.state.user != null) localStorage.setItem('user',this.state.user)
+                // reset any warnings messages
+                this.setState({msgBanner:{show:false}})
             } catch {
                 // trigger warning banner
                 this.setState({msgBanner:{show:true,msg:'Login Failed'}});
@@ -208,7 +200,7 @@ class App extends React.Component<IAppProps,IAppState> {
                         const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
                         this.setState({tasks:tasks})
                         // finish task loading animation
-                        this.setState({msgBanner:{show:false,msg:''}});
+                        this.setState({msgBanner:{show:false}});
                     } catch {
                         return 'Failed to retrieve tasks';
                     }
@@ -218,16 +210,11 @@ class App extends React.Component<IAppProps,IAppState> {
                 this.setState({msgBanner: {show:true,msg:'Login Failed'}});
             }
         }
-        const signUp = async (event:any,username: React.Ref<HTMLInputElement>, password: React.Ref<HTMLInputElement>) => {
+        const signUp = async (event:any,username: string, password: string) => {
             // stop page refresh
             event.preventDefault();
-            // convert to string
-            // @ts-ignore
-            const usernameString = username.current.value;
-            // @ts-ignore
-            const passwordString = password.current.balue;
             // validate input else showing in progress indicator
-            if (isInvalidPassword(passwordString) || isInvalidUsername(usernameString)) {
+            if (isInvalidPassword(password) || isInvalidUsername(username)) {
                 this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
                 return false;
             } else {
@@ -236,7 +223,7 @@ class App extends React.Component<IAppProps,IAppState> {
             }
             // server request to create user
             try {
-                await app.emailPasswordAuth.registerUser(usernameString,passwordString);
+                await app.emailPasswordAuth.registerUser(username,password);
                 // show success banner
                 this.setState({msgBanner: {show:true,msg:'Successfully signed up! Please log in.'}});
             } catch {
@@ -245,14 +232,12 @@ class App extends React.Component<IAppProps,IAppState> {
             }
         }
         const isInvalidUsername = (username: string|null) => {
-            if (username == null) return false;
-            if (username !== '') return false; // is valid
-            return true; // is not valid
+            if (username == null || username === '') return true;
+            return false;
         }
         const isInvalidPassword = (password: string|null) => {
-            if (password == null) return false;
-            if (password.length >= 6) return false; // is valid
-            return true; // is not valid
+            if (password == null || password.length <= 6) return true;
+            return false
         }
         const updateUserName = async (event:React.FormEvent<EventTarget>,userId:string,newName:string) => {
             // stop page refresh
@@ -302,16 +287,21 @@ interface IUserprofileProps {
     user:any;
 }
 interface IUserprofileState {
-    userInfo:any;
+    [key: string]: string;
 }
 class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
-    private prettyUserName = createRef<HTMLInputElement>();
     constructor(props: any) {
         super(props);
         this.state = {
-            userInfo:''
+            prettyUsername:'',
+            username:''
         }
-        this.prettyUserName = React.createRef();
+        this.handleInputChange = this.handleInputChange.bind(this);
+    }
+    handleInputChange({target}: {target:HTMLInputElement}) {
+        this.setState({
+            [target.name]: target.value
+        });
     }
     componentDidMount() {
         // load custom user data
@@ -319,35 +309,37 @@ class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
         try {
             (async () => {
                 const userInfo = await mongoUserCollection.findOne({_id:this.props.user});
-                this.setState({userInfo:userInfo});
+                this.setState({
+                    prettyUsername:userInfo.prettyName,
+                    username:userInfo.username
+                })
             })();
         } catch {
             console.log('Failed to load user info.');
         }
-        
     }
     render() {
-        const userPrettyName = this.state.userInfo?.prettyName;
         return (
             <form>
-                <h2>Edit User Info</h2>
-                <label>Name</label>
+                <h2>Profile</h2>
+                <label>Username: </label>
+                <span>{this.state.username}</span>
+                <br />
+                <label>Name: </label>
                 <input
                     type="text"
-                    defaultValue={userPrettyName}
-                    ref={this.prettyUserName}
+                    value={this.state.prettyUsername}
+                    name="prettyUsername"
+                    onChange={this.handleInputChange}
                 />
-                {/*
-                 // @ts-ignore */}
-                <button onClick={(e) => this.props.updateUserName(e,this.props.user,this.prettyUserName.current.value)}>Save Changes</button>
+                <button onClick={(event) => this.props.updateUserName(event,this.props.user,this.state.prettyUsername)}>Save Changes</button>
             </form>
         );
     }
 }
-
 // Full task list (composed of many Task components)
 interface ITaskListProps {
-    tasks:any;
+    tasks:Array<ITask>;
     deleteTask:any;
     completeTask:any;
     saveEditedTask:any;
@@ -456,10 +448,9 @@ class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
         )
     }
 }
-
 // new task entry form
 interface INewTaskEntryProps {
-    addTask:any;
+    addTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, taskTitle: string) => void;
 }
 interface INewTaskEntryState {
     [key: string]: string;
@@ -467,19 +458,24 @@ interface INewTaskEntryState {
 class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState> {
     constructor(props:any) {
         super(props);
-        // store value of task input field
         this.state = {
-            taskText: ''
+            taskText: '' // task input field
         }
-        this.handleChange = this.handleChange.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
     }
     // update state when input field is edited
-    handleChange({target}: {target:any}) {
+    handleInputChange({target}: {target:HTMLInputElement}) {
         this.setState({
             [target.name]: target.value
         });
     }
-    render() { 
+    
+    render() {
+        // clear local state (tied to input field) and call parent function to add task
+        const addTask = (event: React.MouseEvent<HTMLElement>,taskTitle: string) => {
+            this.setState({taskText:''});
+            this.props.addTask(event,taskTitle);
+        }
         return (
             <form id="newTaskEntry">
                 <input 
@@ -487,9 +483,9 @@ class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState
                     type="text" 
                     name="taskText"
                     value={this.state.taskText}
-                    onChange={this.handleChange}
+                    onChange={this.handleInputChange}
                 />
-                <button onClick={(e) => this.props.addTask(e,this.state.taskText)}>Add Task</button>
+                <button onClick={(event) => addTask(event,this.state.taskText)}>Add Task</button>
             </form>
         );
     }
@@ -497,7 +493,7 @@ class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState
 // Generic component to dsplay message while waiting for response from server
 interface ILoaderProps {
     displayFlag:boolean;
-    msg:string;
+    msg:string | undefined;
 }
 class Loader extends React.Component<ILoaderProps> {
     render() {
@@ -506,66 +502,96 @@ class Loader extends React.Component<ILoaderProps> {
 }
 // Log in screen
 interface ILoginProps {
-    logIn:any;
+    logIn:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
 }
-class LogIn extends React.Component<ILoginProps> {
-    private username: React.RefObject<HTMLInputElement>;
-    private password: React.RefObject<HTMLInputElement>;
+interface ILoginState {
+    [key: string]: string;
+}
+class LogIn extends React.Component<ILoginProps,ILoginState> {
     constructor(props: any) {
         super(props);
-        // refs are eventually passed into logIn() function
-        this.username = React.createRef();
-        this.password = React.createRef();
+        this.state = {
+            username:'',
+            password:''
+        }
+        this.handleInputChange = this.handleInputChange.bind(this);
+    }
+    handleInputChange({target}: {target:HTMLInputElement}) {
+        this.setState({
+            [target.name]: target.value
+        });
     }
     render() {
-
+        const logIn = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
+            this.setState({username:'',password:''});
+            this.props.logIn(event,username,password)
+        }
         return (
             <form>
                 <h1>Log In</h1>
                 <input 
-                    ref={this.username}
+                    name="username"
+                    value={this.state.username}
+                    onChange={this.handleInputChange}
                     type="text" 
                     placeholder="Username"
                 />
                 <input 
-                    ref={this.password}
+                    name="password"
+                    value={this.state.password}
+                    onChange={this.handleInputChange}
                     type="Password" 
                     placeholder="Password"
                 />
-                <button onClick={(e) => this.props.logIn(e,this.username,this.password)}>Log In</button>
+                <button onClick={(event) => logIn(event,this.state.username,this.state.password)}>Log In</button>
             </form>
             
         )
     }
 }
-
 interface ISignupProps {
-    signUp:any;
+    signUp:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
 }
-class SignUp extends React.Component<ISignupProps> {
-    private username: React.RefObject<HTMLInputElement>;
-    private password: React.RefObject<HTMLInputElement>;
+interface ISignupState {
+    [key: string]: string;
+}
+class SignUp extends React.Component<ISignupProps,ISignupState> {
     constructor(props: any) {
         super(props);
-        // refs are eventually passed into signUp() function
-        this.username = React.createRef();
-        this.password = React.createRef();
+        this.state = {
+            username:'',
+            password:''
+        }
+        this.handleInputChange = this.handleInputChange.bind(this);
+    }
+    handleInputChange({target}: {target:HTMLInputElement}) {
+        this.setState({
+            [target.name]: target.value
+        });
     }
     render() {
+        const signUp  = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
+            this.setState({username:'',password:''});
+            this.props.signUp(event,username,password)
+        }
         return (
             <form>
                 <h1>Sign Up</h1>
                 <input 
                     type="text"
                     placeholder="Username"
-                    ref={this.username}
+                    name="username"
+                    value={this.state.username}
+                    onChange={this.handleInputChange}
                 />
                 <input 
                     type="password"
                     placeholder="Password (6+ char. min)"
-                    ref={this.password}
+                    name="password"
+                    value={this.state.password}
+                    onChange={this.handleInputChange}
                 />
-                <button onClick={(e) => this.props.signUp(e,this.username,this.password)}>Sign Up</button>
+                <button onClick={(event) => signUp(event,this.state.username,this.state.password)}>Sign Up</button>
             </form>
         )
     }
