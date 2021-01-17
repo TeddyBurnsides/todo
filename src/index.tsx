@@ -129,7 +129,10 @@ class App extends React.Component<{},IAppState> {
                 throw(error);
             }
         }
-        const saveEditedTask = async (id: string, newTitle: string) => {
+        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string) => {
+            // stop page refresh
+            event.preventDefault();
+            // server ops
             try {                
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -164,7 +167,7 @@ class App extends React.Component<{},IAppState> {
                 console.log('Unable to delete Task.')
             }
         }
-        const logIn = async (event: any, username: string, password: string) => {
+        const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
             // prevent page refresh
             event.preventDefault();
             // validate inputs else showing loading indicator
@@ -210,7 +213,7 @@ class App extends React.Component<{},IAppState> {
                 this.setState({msgBanner: {show:true,msg:'Login Failed'}});
             }
         }
-        const signUp = async (event:any,username: string, password: string) => {
+        const signUp = async (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
             // stop page refresh
             event.preventDefault();
             // validate input else showing in progress indicator
@@ -263,8 +266,9 @@ class App extends React.Component<{},IAppState> {
                 <div>
                     <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
                     <NewTaskEntry addTask={addTask} />
-                    <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveEditedTask={saveEditedTask} />    
+                    <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
                     <UserProfile updateUserName={updateUserName} user={this.state.user} />
+                    <br />
                     <button onClick={() => logout()}>Log Out</button>
                 </div>  
             );
@@ -283,8 +287,8 @@ class App extends React.Component<{},IAppState> {
 }
 // Edit user information
 interface IUserprofileProps {
-    updateUserName:any;
-    user:any;
+    updateUserName:(event:React.FormEvent<EventTarget>,userId:string,newName:string) => void;
+    user:string;
 }
 interface IUserprofileState {
     [key: string]: string;
@@ -340,20 +344,20 @@ class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
 // Full task list (composed of many Task components)
 interface ITaskListProps {
     tasks:Array<ITask>;
-    deleteTask:any;
-    completeTask:any;
-    saveEditedTask:any;
+    deleteTask:(id: string) => void;
+    completeTask:(id: string, status:boolean) => void;
+    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
 }
 class TaskList extends React.Component<ITaskListProps> {
     render() {    
-        let taskList = this.props.tasks.map((task:any,index:number) => {
+        let taskList = this.props.tasks.map((task:ITask) => {
             return(
                 <Task 
-                    key={task._id}
+                    key={task._id.toString()}
                     task={task}
                     deleteTask={this.props.deleteTask}
                     completeTask={this.props.completeTask}
-                    saveEditedTask={this.props.saveEditedTask}
+                    saveTask={this.props.saveTask}
                 />
             );
         }).reverse(); // puts most recent task on top
@@ -369,38 +373,40 @@ class TaskList extends React.Component<ITaskListProps> {
 // Individual Task
 interface ITaskProps {
     key: string;
-    task:any;
-    deleteTask:any;
-    completeTask:any;
-    saveEditedTask:any;
+    task: ITask;
+    deleteTask:(id: string) => void;
+    completeTask:(id: string, status:boolean) => void;
+    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
 }
 interface ITaskState {
     editMode:boolean;
+    title: string;
 }
 class Task extends React.Component<ITaskProps,ITaskState> {
-    private newTitle = createRef<HTMLInputElement>();
     constructor(props: any) {
         super(props);
-        this.newTitle = React.createRef();
         this.state = {
-            editMode:false
+            editMode:false,
+            title:''
         }
+        this.handleInputChange = this.handleInputChange.bind(this);
+    }
+    handleInputChange({target}: {target:HTMLInputElement}) {
+        this.setState({
+            title: target.value
+        });
     }
     render() {
         // simplify task ID
         const id=this.props.task._id.toString();
-        // enable or disble editing mode
+        // toggle Edit Mode
         const toggleEditMode = () => {
             this.setState({editMode:!this.state.editMode})
         }
         // wrapper that allows us to call server routine and update local state
-        const saveEditedTaskWrapper = async (event:any,id:number,newTitle:any) => {
-            // prevent page refresh
-            event.preventDefault();
-            // get value from ref
-            newTitle = newTitle.current.value;
+        const saveTask = async (event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, title: string) => {
             // call server function in parent component (allows state to be updated)
-            this.props.saveEditedTask(id,newTitle);
+            this.props.saveTask(event,id,title);
             // disable editing mode
             toggleEditMode();
         }
@@ -411,9 +417,10 @@ class Task extends React.Component<ITaskProps,ITaskState> {
                         <input 
                             type="text"
                             defaultValue={this.props.task.title}
-                            ref={this.newTitle}
+                            value={this.state.title}
+                            onChange={this.handleInputChange}
                         />
-                        <button onClick={(e) => saveEditedTaskWrapper(e,id,this.newTitle)}>Save</button>
+                        <button onClick={(event) => saveTask(event,id,this.state.title)}>Save</button>
                     </form>           
                 </li>    
             );
@@ -435,14 +442,14 @@ class Task extends React.Component<ITaskProps,ITaskState> {
 }
 // Togglable task completion button
 interface ICompleteButtonProps {
-    complete:any;
-    id: number;
-    completeTask:any;
+    complete:boolean;
+    id: string;
+    completeTask:(id: string, status: boolean) => void;
 }
 class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
     render() {
-        let buttonText = 'Complete';
-        if (this.props.complete) buttonText='Uncomplete';
+        // assign button text depending on completion status of task
+        let buttonText = this.props.complete ? 'Uncomplete' : 'Complete';
         return (    
             <button onClick={() => this.props.completeTask(this.props.id,this.props.complete)}>{buttonText}</button>
         )
@@ -473,7 +480,7 @@ class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState
     render() {
         // clear local state (tied to input field) and call parent function to add task
         const addTask = (event: React.MouseEvent<HTMLElement>,taskTitle: string) => {
-            this.setState({taskText:''});
+            this.setState({taskText:''}); // resets input field
             this.props.addTask(event,taskTitle);
         }
         return (
@@ -493,11 +500,15 @@ class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState
 // Generic component to dsplay message while waiting for response from server
 interface ILoaderProps {
     displayFlag:boolean;
-    msg:string | undefined;
+    msg?:string;
 }
 class Loader extends React.Component<ILoaderProps> {
     render() {
-        return (this.props.displayFlag) ? this.props.msg : false;
+        return (
+            <div>
+                {this.props.displayFlag ? this.props.msg : false}
+            </div>
+        );
     }
 }
 // Log in screen
@@ -571,7 +582,12 @@ class SignUp extends React.Component<ISignupProps,ISignupState> {
     }
     render() {
         const signUp  = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
-            this.setState({username:'',password:''});
+            // clear input fields
+            this.setState({
+                username:'',
+                password:''
+            });
+            // call parent function
             this.props.signUp(event,username,password)
         }
         return (
