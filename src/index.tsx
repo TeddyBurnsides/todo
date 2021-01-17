@@ -1,37 +1,46 @@
-import React from 'react';
+import React, { createRef, Ref } from 'react';
 import ReactDOM from 'react-dom';
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Connection
-const app = new Realm.App({ id: "todo-app-mnupq", timeout: 10000 });
+const app = new Realm.App({ id: "todo-app-mnupq"});
 const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db('data').collection('tasks');
 const mongoUserCollection = app.services.mongodb('mongodb-atlas').db('data').collection('users');
 
 // Main Wrapper
-class App extends React.Component {
-    constructor() {
-        super();
-        // state holds things require page updates when changed
+interface ISingleTask {
+    _id: Object;
+    complete: boolean;
+    status: boolean;
+    title: string;
+    user: string;
+}
+interface IAppProps {}
+interface IAppState {
+    tasks: Array<ISingleTask>;
+    user: string | null;
+    msgBanner: {show:boolean, msg:string};
+}
+class App extends React.Component<IAppProps,IAppState> {
+    constructor(props: never) {
+        super(props);
+        // state holds things that require page updates when modified
         this.state = {
             tasks:[],
-            user:'', // user ID
-            addingTask:false,
-            loadingTasks:false,
-            profileBanner: {show:false,msg:''},
-            signUpBanner: {show:false,msg:''},
-            logInBanner: {show:false,msg:''}
+            user:'',
+            msgBanner: {show:false,msg:''}
         }
     }
     // fetch task list when reloading
     componentDidMount() {
         // get user from local storage
-        const user = localStorage.getItem('user')
+        const user = localStorage.getItem('user');
         // restore state
         this.setState({user:user});
         // if we're logged in, then attempt to load posts
         if (user) {
             // start task loading animation
-            this.setState({loadingTasks:true});
+            this.setState({msgBanner:{show:true,msg:'Loading Tasks'}});
             // anonymous function to retrieve tasks from server when page loads
             (async () => {
                 try {   
@@ -40,7 +49,7 @@ class App extends React.Component {
                     // load tasks to state
                     this.setState({tasks:tasks})
                     // finish task loading animation
-                    this.setState({loadingTasks:false});
+                    this.setState({msgBanner:{show:false,msg:''}});
                 } catch {
                     return 'Failed to retrieve tasks';
                 }
@@ -48,16 +57,19 @@ class App extends React.Component {
         }
     }
     render() {
-        const addTask = async (event,taskTitle) => {
+        const addTask = async (event: React.MouseEvent<HTMLElement>,taskTitle: string) => {
             // prevent page from refreshing
+            console.log(event);
             event.preventDefault(); 
             // starting loading animation
-            this.setState({addingTask:true});
+            this.setState({msgBanner:{show:true,msg:'Adding in progress'}});
             // get value of input field
-            taskTitle = taskTitle.current.value; 
+            if (taskTitle == null) return false;
+            //taskTitle = taskTitle.current.value; 
             // don't continue if empty
             if (taskTitle==='') return false; 
             // clear input fields in form
+            // @ts-ignore
             document.getElementById('newTaskEntry').reset();
             // server operations
             try {
@@ -66,7 +78,7 @@ class App extends React.Component {
                     title:taskTitle,
                     status:true,
                     complete:false,
-                    user:this.state.user
+                    user:this.state.user != null ? this.state.user : ''
                 });
                 // update state with new task (for real time updates on page)
                 this.setState((state) => {
@@ -74,12 +86,13 @@ class App extends React.Component {
                         _id: new bson.ObjectId(newID.insertedId.id), // extract actual ID
                         title: taskTitle,
                         status: true,
-                        complete: false
+                        complete: false,
+                        user:this.state.user != null ? this.state.user : ''
                     });
                     return {tasks:state.tasks}
                 });
                 // clear loading animation
-                this.setState({addingTask:false});
+                this.setState({msgBanner:{show:false,msg:''}});
             } catch {
                 console.log('Adding task failed!');
             }
@@ -87,6 +100,7 @@ class App extends React.Component {
         const logout = async () => {
             try {
                 // log out 
+                // @ts-ignore
                 await app.currentUser?.logOut().then(this.setState({
                     user:''
                 }));
@@ -96,7 +110,7 @@ class App extends React.Component {
                 console.log('Unable to Log out');
             }
         }
-        const completeTask = async (id,status) => {
+        const completeTask = async (id: string,status: string) => {
             try {
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -114,7 +128,7 @@ class App extends React.Component {
                 console.log('Unable to complete task');
             }
         }
-        const saveEditedTask = async (id,newTitle) => {
+        const saveEditedTask = async (id: string,newTitle: string) => {
             try {                
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -132,7 +146,7 @@ class App extends React.Component {
                 console.log('Unable to update task.')
             }
         }
-        const deleteTask = async (id) => {
+        const deleteTask = async (id: string) => {
             try {
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -149,86 +163,102 @@ class App extends React.Component {
                 console.log('Unable to delete Task.')
             }
         }
-        const logIn = async (event,username,password) => {
+        const logIn = async (event: any, username: React.Ref<HTMLInputElement>, password: React.Ref<HTMLInputElement>) => {
             // prevent page refresh
             event.preventDefault();
+            // extract values from refs
+            // @ts-ignore
+            const usernameString = username.current.value;
+            // @ts-ignore
+            const passwordString = password.current.value;
             // validate inputs else showing loading indicator
-            if (isInvalidUsername(username) || isInvalidPassword(password)) {
-                this.setState({logInBanner: {show:true,msg:'Invalid username or password'}});
+            if (isInvalidUsername(usernameString) || isInvalidPassword(passwordString)) {
+                this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
                 return false;
             } else {
-                this.setState({logInBanner: {show:true,msg:'Logging in...'}});
+                this.setState({msgBanner: {show:true,msg:'Logging in...'}});
             }
             // Create an anonymous credential
-            const credentials = Realm.Credentials.emailPassword(username, password);
+            // @ts-ignore
+            console.log(usernameString,passwordString);
+            let credentials=Realm.Credentials.emailPassword(usernameString, passwordString);
             let user = null;
             try {
               // Authenticate the user
+             // @ts-ignore 
+
               user = await app.logIn(credentials);
               // update state to trigger page refresh
               this.setState({user:user.id});
               // save off to local storage so it will persist on refresh
-              localStorage.setItem('user',this.state.user)
+             if (this.state.user != null) localStorage.setItem('user',this.state.user)
               // reset any warnings messages
-              this.setState({logInBanner:{show:false},signUpBanner:{show:false}})
+              this.setState({msgBanner:{show:false,msg:''}})
             } catch {
                 // trigger warning banner
-                this.setState({logInBanner: {show:true,msg:'Login Failed'}});
+                this.setState({msgBanner:{show:true,msg:'Login Failed'}});
             }
             // load posts if login was successful
             if (user) {
-                // trigger loading posts indicator
-                this.setState({loadingTasks:true});
+                // start loading posts indicator
+                this.setState({msgBanner:{show:true,msg:'Loading Tasks'}});
                 // get posts from server
                 (async () => {
                     try {
                         const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
                         this.setState({tasks:tasks})
                         // finish task loading animation
-                        this.setState({loadingTasks:false});
+                        this.setState({msgBanner:{show:false,msg:''}});
                     } catch {
                         return 'Failed to retrieve tasks';
                     }
                 })();
             } else {
                 // if no user, then login failed
-                this.setState({logInBanner: {show:true,msg:'Login Failed'}});
+                this.setState({msgBanner: {show:true,msg:'Login Failed'}});
             }
         }
-        const signUp = async (event,username,password) => {
+        const signUp = async (event:any,username: React.Ref<HTMLInputElement>, password: React.Ref<HTMLInputElement>) => {
             // stop page refresh
             event.preventDefault();
+            // convert to string
+            // @ts-ignore
+            const usernameString = username.current.value;
+            // @ts-ignore
+            const passwordString = password.current.balue;
             // validate input else showing in progress indicator
-            if (isInvalidPassword(password) || isInvalidUsername(username)) {
-                this.setState({signUpBanner: {show:true,msg:'Invalid username or password'}});
+            if (isInvalidPassword(passwordString) || isInvalidUsername(usernameString)) {
+                this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
                 return false;
             } else {
                 // in progress banner
-                this.setState({signUpBanner: {show:true,msg:'Signing up...'}});
+                this.setState({msgBanner: {show:true,msg:'Signing up...'}});
             }
             // server request to create user
             try {
-                await app.emailPasswordAuth.registerUser(username,password);
+                await app.emailPasswordAuth.registerUser(usernameString,passwordString);
                 // show success banner
-                this.setState({signUpBanner: {show:true,msg:'Successfully signed up! Please log in.'}});
+                this.setState({msgBanner: {show:true,msg:'Successfully signed up! Please log in.'}});
             } catch {
                 // show failure banner
-                this.setState({signUpBanner: {show:true,msg:'Sign up failed.'}});
+                this.setState({msgBanner: {show:true,msg:'Sign up failed.'}});
             }
         }
-        const isInvalidUsername = (username) => {
+        const isInvalidUsername = (username: string|null) => {
+            if (username == null) return false;
             if (username !== '') return false; // is valid
             return true; // is not valid
         }
-        const isInvalidPassword = (password) => {
+        const isInvalidPassword = (password: string|null) => {
+            if (password == null) return false;
             if (password.length >= 6) return false; // is valid
             return true; // is not valid
         }
-        const updateUserName = async (event,userId,newName) => {
+        const updateUserName = async (event:React.FormEvent<EventTarget>,userId:string,newName:string) => {
             // stop page refresh
             event.preventDefault();
             // in progress banner
-            this.setState({profileBanner: {show:true, msg:'Changing Name...'}})
+            this.setState({msgBanner: {show:true, msg:'Changing Name...'}})
             // server ops
             try {
                 await mongoUserCollection.updateOne(
@@ -236,7 +266,7 @@ class App extends React.Component {
                     {$set: {'prettyName': newName}} // update user's name
                 );
                 // success banner
-                this.setState({profileBanner: {show: true, msg:'Name Changed!'}})
+                this.setState({msgBanner: {show: true, msg:'Name Changed!'}})
             } catch {
                 console.log('failed to update user name.');
             }
@@ -246,19 +276,10 @@ class App extends React.Component {
         if (this.state.user) {
             return (
                 <div>
-                    <NewTaskEntry addTask={addTask} addingTask={this.state.addingTask} />
-                    <TaskList 
-                        tasks={this.state.tasks}
-                        deleteTask={deleteTask}
-                        completeTask={completeTask}
-                        loadingTasks={this.state.loadingTasks}
-                        saveEditedTask={saveEditedTask}
-                    />    
-                    <UserProfile 
-                        updateUserName={updateUserName}
-                        user={this.state.user}
-                        profileBanner={this.state.profileBanner}
-                    />
+                    <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
+                    <NewTaskEntry addTask={addTask} />
+                    <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveEditedTask={saveEditedTask} />    
+                    <UserProfile updateUserName={updateUserName} user={this.state.user} />
                     <button onClick={() => logout()}>Log Out</button>
                 </div>  
             );
@@ -266,14 +287,9 @@ class App extends React.Component {
         } else {
             return (
                 <div>
-                    <LogIn 
-                        logInBanner={this.state.logInBanner} 
-                        logIn={logIn} 
-                    />
-                    <SignUp 
-                        signUp={signUp} 
-                        signUpBanner={this.state.signUpBanner}
-                    />
+                    <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
+                    <LogIn logIn={logIn} />
+                    <SignUp signUp={signUp} />
                 </div>
                 
             );
@@ -281,9 +297,17 @@ class App extends React.Component {
     }
 }
 // Edit user information
-class UserProfile extends React.Component {
-    constructor(props) {
-        super();
+interface IUserprofileProps {
+    updateUserName:any;
+    user:any;
+}
+interface IUserprofileState {
+    userInfo:any;
+}
+class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
+    private prettyUserName = createRef<HTMLInputElement>();
+    constructor(props: any) {
+        super(props);
         this.state = {
             userInfo:''
         }
@@ -313,17 +337,24 @@ class UserProfile extends React.Component {
                     defaultValue={userPrettyName}
                     ref={this.prettyUserName}
                 />
+                {/*
+                 // @ts-ignore */}
                 <button onClick={(e) => this.props.updateUserName(e,this.props.user,this.prettyUserName.current.value)}>Save Changes</button>
-                <Loader  waitFlag={this.props.profileBanner.show} msg={this.props.profileBanner.msg} />
             </form>
         );
     }
 }
 
 // Full task list (composed of many Task components)
-class TaskList extends React.Component {
+interface ITaskListProps {
+    tasks:any;
+    deleteTask:any;
+    completeTask:any;
+    saveEditedTask:any;
+}
+class TaskList extends React.Component<ITaskListProps> {
     render() {    
-        let taskList = this.props.tasks.map((task,index) => {
+        let taskList = this.props.tasks.map((task:any,index:number) => {
             return(
                 <Task 
                     key={task._id}
@@ -335,10 +366,7 @@ class TaskList extends React.Component {
             );
         }).reverse(); // puts most recent task on top
         // if still loading tasks
-        if (this.props.loadingTasks) {
-            return <p>Loading Tasks...</p>
-        // if not loading, but no tasks retrieved
-        } else if (taskList.length === 0) {
+        if (taskList.length === 0) {
             return <p>No tasks</p>
         // if not loading, and we have tasks
         } else {
@@ -347,9 +375,20 @@ class TaskList extends React.Component {
     }
 }
 // Individual Task
-class Task extends React.Component {
-    constructor(props) {
-        super();
+interface ITaskProps {
+    key: string;
+    task:any;
+    deleteTask:any;
+    completeTask:any;
+    saveEditedTask:any;
+}
+interface ITaskState {
+    editMode:boolean;
+}
+class Task extends React.Component<ITaskProps,ITaskState> {
+    private newTitle = createRef<HTMLInputElement>();
+    constructor(props: any) {
+        super(props);
         this.newTitle = React.createRef();
         this.state = {
             editMode:false
@@ -363,7 +402,7 @@ class Task extends React.Component {
             this.setState({editMode:!this.state.editMode})
         }
         // wrapper that allows us to call server routine and update local state
-        const saveEditedTaskWrapper = async (event,id,newTitle) => {
+        const saveEditedTaskWrapper = async (event:any,id:number,newTitle:any) => {
             // prevent page refresh
             event.preventDefault();
             // get value from ref
@@ -403,7 +442,12 @@ class Task extends React.Component {
     }
 }
 // Togglable task completion button
-class CompleteTaskButton extends React.Component {
+interface ICompleteButtonProps {
+    complete:any;
+    id: number;
+    completeTask:any;
+}
+class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
     render() {
         let buttonText = 'Complete';
         if (this.props.complete) buttonText='Uncomplete';
@@ -412,11 +456,28 @@ class CompleteTaskButton extends React.Component {
         )
     }
 }
+
 // new task entry form
-class NewTaskEntry extends React.Component {
-    constructor(props) {
-        super();
-        this.newTaskTitle = React.createRef();
+interface INewTaskEntryProps {
+    addTask:any;
+}
+interface INewTaskEntryState {
+    [key: string]: string;
+}
+class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState> {
+    constructor(props:any) {
+        super(props);
+        // store value of task input field
+        this.state = {
+            taskText: ''
+        }
+        this.handleChange = this.handleChange.bind(this);
+    }
+    // update state when input field is edited
+    handleChange({target}: {target:any}) {
+        this.setState({
+            [target.name]: target.value
+        });
     }
     render() { 
         return (
@@ -424,33 +485,43 @@ class NewTaskEntry extends React.Component {
                 <input 
                     placeholder="Type here..."
                     type="text" 
-                    ref={this.newTaskTitle} 
+                    name="taskText"
+                    value={this.state.taskText}
+                    onChange={this.handleChange}
                 />
-                <button onClick={(e) => this.props.addTask(e,this.newTaskTitle)}>Add Task</button>
-                <Loader waitFlag={this.props.addingTask} msg='Adding Task...' />
+                <button onClick={(e) => this.props.addTask(e,this.state.taskText)}>Add Task</button>
             </form>
         );
     }
 }
 // Generic component to dsplay message while waiting for response from server
-class Loader extends React.Component {
+interface ILoaderProps {
+    displayFlag:boolean;
+    msg:string;
+}
+class Loader extends React.Component<ILoaderProps> {
     render() {
-        return (this.props.waitFlag) ? this.props.msg : false;
+        return (this.props.displayFlag) ? this.props.msg : false;
     }
 }
 // Log in screen
-class LogIn extends React.Component {
-    constructor(props) {
-        super();
+interface ILoginProps {
+    logIn:any;
+}
+class LogIn extends React.Component<ILoginProps> {
+    private username: React.RefObject<HTMLInputElement>;
+    private password: React.RefObject<HTMLInputElement>;
+    constructor(props: any) {
+        super(props);
         // refs are eventually passed into logIn() function
         this.username = React.createRef();
         this.password = React.createRef();
     }
     render() {
+
         return (
             <form>
                 <h1>Log In</h1>
-                <p><Loader waitFlag={this.props.logInBanner.show} msg={this.props.logInBanner.msg} /></p>
                 <input 
                     ref={this.username}
                     type="text" 
@@ -461,16 +532,21 @@ class LogIn extends React.Component {
                     type="Password" 
                     placeholder="Password"
                 />
-                <button onClick={(e) => this.props.logIn(e,this.username.current.value,this.password.current.value)}>Log In</button>
+                <button onClick={(e) => this.props.logIn(e,this.username,this.password)}>Log In</button>
             </form>
             
         )
     }
 }
 
-class SignUp extends React.Component {
-    constructor(props) {
-        super();
+interface ISignupProps {
+    signUp:any;
+}
+class SignUp extends React.Component<ISignupProps> {
+    private username: React.RefObject<HTMLInputElement>;
+    private password: React.RefObject<HTMLInputElement>;
+    constructor(props: any) {
+        super(props);
         // refs are eventually passed into signUp() function
         this.username = React.createRef();
         this.password = React.createRef();
@@ -479,7 +555,6 @@ class SignUp extends React.Component {
         return (
             <form>
                 <h1>Sign Up</h1>
-                <p><Loader waitFlag={this.props.signUpBanner.show} msg={this.props.signUpBanner.msg} /></p>
                 <input 
                     type="text"
                     placeholder="Username"
@@ -490,7 +565,7 @@ class SignUp extends React.Component {
                     placeholder="Password (6+ char. min)"
                     ref={this.password}
                 />
-                <button onClick={(e) => this.props.signUp(e,this.username.current.value,this.password.current.value)}>Sign Up</button>
+                <button onClick={(e) => this.props.signUp(e,this.username,this.password)}>Sign Up</button>
             </form>
         )
     }
