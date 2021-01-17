@@ -1,4 +1,4 @@
-import React, { createRef } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
@@ -54,7 +54,7 @@ class App extends React.Component<{},IAppState> {
         }
     }
     render() {
-        const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string) => {
+        const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string): Promise<void> => {
             // prevent page from refreshing
             event.preventDefault(); 
             // starting loading animation
@@ -62,44 +62,44 @@ class App extends React.Component<{},IAppState> {
             // don't continue if invalid task
             if (isInvalidTask(taskTitle)) {
                 this.setState({msgBanner:{show:true,msg:'Invalid task'}});
-                return false;
-            }
-            // server operations
-            try {
-                // check for valid user info
-                if (this.state.user == null) {
-                    this.setState({msgBanner:{show:true,msg:'User error'}});
-                    return false;
-                }
-                // server operation
-                const newID = await mongoTaskCollection.insertOne({
-                    title:taskTitle,
-                    status:true,
-                    complete:false,
-                    user:this.state.user
-                });
-                // update state with new task (for real time updates on page)
-                this.setState((state) => {
-                    state.tasks.push({
-                        _id: new bson.ObjectId(newID.insertedId.id), // extract actual ID
-                        title: taskTitle,
-                        status: true,
-                        complete: false,
+            } else {
+                // server operations
+                try {
+                    // check for valid user info
+                    if (this.state.user == null) {
+                        this.setState({msgBanner:{show:true,msg:'User error'}});
+                        throw new Error('Invalid user info');
+                    }
+                    // server operation
+                    const newID = await mongoTaskCollection.insertOne({
+                        title:taskTitle,
+                        status:true,
+                        complete:false,
                         user:this.state.user
                     });
-                    return {tasks:state.tasks}
-                });
-                // clear loading animation
-                this.setState({msgBanner:{show:false}});
-            } catch(error) {
-                throw(error);
-            }
+                    // update state with new task (for real time updates on page)
+                    this.setState((state) => {
+                        state.tasks.push({
+                            _id: new bson.ObjectId(newID.insertedId.id), // extract actual ID
+                            title: taskTitle,
+                            status: true,
+                            complete: false,
+                            user:this.state.user
+                        });
+                        return {tasks:state.tasks}
+                    });
+                    // clear loading animation
+                    this.setState({msgBanner:{show:false}});
+                } catch(error) {
+                    throw(error);
+                }
+            }   
         }
         const isInvalidTask = (taskTitle: string|null) => {
             if (taskTitle === '' || taskTitle == null) return true;
             return false;
         }
-        const logout = async () => {
+        const logout = async (): Promise<void> => {
             try {
                 // server operation
                 await app.currentUser?.logOut().then(() => this.setState({
@@ -111,7 +111,7 @@ class App extends React.Component<{},IAppState> {
                 throw(error);
             }
         }
-        const completeTask = async (id: string, status: boolean) => {
+        const completeTask = async (id: string, status: boolean): Promise<void> => {
             try {
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -129,7 +129,7 @@ class App extends React.Component<{},IAppState> {
                 throw(error);
             }
         }
-        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string) => {
+        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string): Promise<void> => {
             // stop page refresh
             event.preventDefault();
             console.log(newTitle);
@@ -151,7 +151,7 @@ class App extends React.Component<{},IAppState> {
                 console.log('Unable to update task.')
             }
         }
-        const deleteTask = async (id: string) => {
+        const deleteTask = async (id: string): Promise<void> => {
             try {
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
@@ -168,71 +168,69 @@ class App extends React.Component<{},IAppState> {
                 console.log('Unable to delete Task.')
             }
         }
-        const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
+        const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
             // prevent page refresh
             event.preventDefault();
             // validate inputs else showing loading indicator
             if (isInvalidUsername(username) || isInvalidPassword(password)) {
                 this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
-                return false;
             } else {
                 this.setState({msgBanner: {show:true,msg:'Logging in...'}});
-            }
-            // Create an anonymous credential
-            let credentials=Realm.Credentials.emailPassword(username, password);
-            let user = null;
-            try {
-                // Authenticate the user
-                user = await app.logIn(credentials);
-                // update state to trigger page refresh
-                this.setState({user:user.id});
-                // save off to local storage so it will persist on refresh
-                if (this.state.user != null) localStorage.setItem('user',this.state.user)
-                // reset any warnings messages
-                this.setState({msgBanner:{show:false}})
-            } catch {
-                // trigger warning banner
-                this.setState({msgBanner:{show:true,msg:'Login Failed'}});
-            }
-            // load posts if login was successful
-            if (user) {
-                // start loading posts indicator
-                this.setState({msgBanner:{show:true,msg:'Loading Tasks'}});
-                // get posts from server
-                (async () => {
-                    try {
-                        const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
-                        this.setState({tasks:tasks})
-                        // finish task loading animation
-                        this.setState({msgBanner:{show:false}});
-                    } catch {
-                        return 'Failed to retrieve tasks';
-                    }
-                })();
-            } else {
-                // if no user, then login failed
-                this.setState({msgBanner: {show:true,msg:'Login Failed'}});
+                // Create an anonymous credential
+                let credentials=Realm.Credentials.emailPassword(username, password);
+                let user = null;
+                try {
+                    // Authenticate the user
+                    user = await app.logIn(credentials);
+                    // update state to trigger page refresh
+                    this.setState({user:user.id});
+                    // save off to local storage so it will persist on refresh
+                    if (this.state.user != null) localStorage.setItem('user',this.state.user)
+                    // reset any warnings messages
+                    this.setState({msgBanner:{show:false}})
+                } catch {
+                    // trigger warning banner
+                    this.setState({msgBanner:{show:true,msg:'Login Failed'}});
+                }
+                // load posts if login was successful
+                if (user) {
+                    // start loading posts indicator
+                    this.setState({msgBanner:{show:true,msg:'Loading Tasks'}});
+                    // get posts from server
+                    (async () => {
+                        try {
+                            const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
+                            this.setState({tasks:tasks})
+                            // finish task loading animation
+                            this.setState({msgBanner:{show:false}});
+                        } catch {
+                            throw new Error('Failed to retrieve tasks');
+                        }
+                    })();
+                } else {
+                    // if no user, then login failed
+                    this.setState({msgBanner: {show:true,msg:'Login Failed'}});
+                }
             }
         }
-        const signUp = async (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
+        const signUp = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
             // stop page refresh
             event.preventDefault();
             // validate input else showing in progress indicator
             if (isInvalidPassword(password) || isInvalidUsername(username)) {
                 this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
-                return false;
             } else {
                 // in progress banner
                 this.setState({msgBanner: {show:true,msg:'Signing up...'}});
-            }
-            // server request to create user
-            try {
-                await app.emailPasswordAuth.registerUser(username,password);
-                // show success banner
-                this.setState({msgBanner: {show:true,msg:'Successfully signed up! Please log in.'}});
-            } catch {
-                // show failure banner
-                this.setState({msgBanner: {show:true,msg:'Sign up failed.'}});
+                // server request to create user
+                try {
+                    await app.emailPasswordAuth.registerUser(username,password);
+                    // show success banner
+                    this.setState({msgBanner: {show:true,msg:'Successfully signed up! Please log in.'}});
+                } catch {
+                    // show failure banner
+                    this.setState({msgBanner: {show:true,msg:'Sign up failed.'}});
+                }
             }
         }
         const isInvalidUsername = (username: string|null) => {
@@ -243,7 +241,7 @@ class App extends React.Component<{},IAppState> {
             if (password == null || password.length <= 6) return true;
             return false
         }
-        const updateUserName = async (event:React.FormEvent<EventTarget>,userId:string,newName:string) => {
+        const updateUserName = async (event:React.FormEvent<EventTarget>,userId:string,newName:string): Promise<void> => {
             // stop page refresh
             event.preventDefault();
             // in progress banner
@@ -310,7 +308,7 @@ class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
     }
     componentDidMount() {
         // load custom user data
-        if (!this.props.user) return false;
+        if (!this.props.user) throw new Error('No user!');
         try {
             (async () => {
                 const userInfo = await mongoUserCollection.findOne({_id:this.props.user});
@@ -415,11 +413,7 @@ class Task extends React.Component<ITaskProps,ITaskState> {
             return (
                 <li>
                     <form>
-                        <input 
-                            type="text"
-                            value={this.state.title}
-                            onChange={this.handleInputChange}
-                        />
+                        <input type="text" value={this.state.title} onChange={this.handleInputChange} />
                         <button onClick={(event) => saveTask(event,id,this.state.title)}>Save</button>
                     </form>           
                 </li>    
@@ -485,13 +479,7 @@ class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState
         }
         return (
             <form id="newTaskEntry">
-                <input 
-                    placeholder="Type here..."
-                    type="text" 
-                    name="taskText"
-                    value={this.state.taskText}
-                    onChange={this.handleInputChange}
-                />
+                <input type="text" name="taskText" value={this.state.taskText} onChange={this.handleInputChange} />
                 <button onClick={(event) => addTask(event,this.state.taskText)}>Add Task</button>
             </form>
         );
@@ -556,7 +544,6 @@ class LogIn extends React.Component<ILoginProps,ILoginState> {
                 />
                 <button onClick={(event) => logIn(event,this.state.username,this.state.password)}>Log In</button>
             </form>
-            
         )
     }
 }
