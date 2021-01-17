@@ -132,6 +132,7 @@ class App extends React.Component<{},IAppState> {
         const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string) => {
             // stop page refresh
             event.preventDefault();
+            console.log(newTitle);
             // server ops
             try {                
                 // get index of task we're removing
@@ -387,7 +388,7 @@ class Task extends React.Component<ITaskProps,ITaskState> {
         super(props);
         this.state = {
             editMode:false,
-            title:''
+            title:this.props.task.title // initialize with existing title
         }
         this.handleInputChange = this.handleInputChange.bind(this);
     }
@@ -416,7 +417,6 @@ class Task extends React.Component<ITaskProps,ITaskState> {
                     <form>
                         <input 
                             type="text"
-                            defaultValue={this.props.task.title}
                             value={this.state.title}
                             onChange={this.handleInputChange}
                         />
