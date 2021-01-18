@@ -1,20 +1,25 @@
+// Core imports
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
+// Components
+import SignUp from './components/signUp';
+import LogIn from './components/logIn';
+import Loader from './components/loader';
+import NewTaskEntry from './components/newTaskEntry';
+import TaskList from './components/taskList';
+import UserProfile from './components/userProfile';
+// Constants
+import Constants from './components/constants';
+// Interfaces
+import ITask from './components/ITask';
 // Connection
-const app = new Realm.App({ id: "todo-app-mnupq"});
-const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db('data').collection('tasks');
-const mongoUserCollection = app.services.mongodb('mongodb-atlas').db('data').collection('users');
+const app = new Realm.App({ id: Constants.appID});
+const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.taskColl);
+const mongoUserCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.userColl);
 
-// Main Wrapper
-interface ITask {
-    _id: Object;
-    complete: boolean;
-    status: boolean;
-    title: string;
-    user: string;
-}
+// Main App
 interface IAppState {
     tasks: Array<ITask>;
     user: string;
@@ -171,6 +176,8 @@ class App extends React.Component<{},IAppState> {
         const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
             // prevent page refresh
             event.preventDefault();
+            console.log(username,password);
+            console.log(app);
             // validate inputs else showing loading indicator
             if (isInvalidUsername(username) || isInvalidPassword(password)) {
                 this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
@@ -282,321 +289,6 @@ class App extends React.Component<{},IAppState> {
                 
             );
         }
-    }
-}
-// Edit user information
-interface IUserprofileProps {
-    updateUserName:(event:React.FormEvent<EventTarget>,userId:string,newName:string) => void;
-    user:string;
-}
-interface IUserprofileState {
-    [key: string]: string;
-}
-class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            prettyUsername:'',
-            username:''
-        }
-        this.handleInputChange = this.handleInputChange.bind(this);
-    }
-    handleInputChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            [target.name]: target.value
-        });
-    }
-    componentDidMount() {
-        // load custom user data
-        if (!this.props.user) throw new Error('No user!');
-        try {
-            (async () => {
-                const userInfo = await mongoUserCollection.findOne({_id:this.props.user});
-                this.setState({
-                    prettyUsername:userInfo.prettyName,
-                    username:userInfo.username
-                })
-            })();
-        } catch {
-            console.log('Failed to load user info.');
-        }
-    }
-    render() {
-        return (
-            <form>
-                <h2>Profile</h2>
-                <label>Username: </label>
-                <span>{this.state.username}</span>
-                <br />
-                <label>Name: </label>
-                <input
-                    type="text"
-                    value={this.state.prettyUsername}
-                    name="prettyUsername"
-                    onChange={this.handleInputChange}
-                />
-                <button onClick={(event) => this.props.updateUserName(event,this.props.user,this.state.prettyUsername)}>Save Changes</button>
-            </form>
-        );
-    }
-}
-// Full task list (composed of many Task components)
-interface ITaskListProps {
-    tasks:Array<ITask>;
-    deleteTask:(id: string) => void;
-    completeTask:(id: string, status:boolean) => void;
-    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
-}
-class TaskList extends React.Component<ITaskListProps> {
-    render() {    
-        let taskList = this.props.tasks.map((task:ITask) => {
-            return(
-                <Task 
-                    key={task._id.toString()}
-                    task={task}
-                    deleteTask={this.props.deleteTask}
-                    completeTask={this.props.completeTask}
-                    saveTask={this.props.saveTask}
-                />
-            );
-        }).reverse(); // puts most recent task on top
-        // if still loading tasks
-        if (taskList.length === 0) {
-            return <p>No tasks</p>
-        // if not loading, and we have tasks
-        } else {
-            return <ul>{taskList}</ul>
-        }
-    }
-}
-// Individual Task
-interface ITaskProps {
-    key: string;
-    task: ITask;
-    deleteTask:(id: string) => void;
-    completeTask:(id: string, status:boolean) => void;
-    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
-}
-interface ITaskState {
-    editMode:boolean;
-    title: string;
-}
-class Task extends React.Component<ITaskProps,ITaskState> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            editMode:false,
-            title:this.props.task.title // initialize with existing title
-        }
-        this.handleInputChange = this.handleInputChange.bind(this);
-    }
-    handleInputChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            title: target.value
-        });
-    }
-    render() {
-        // simplify task ID
-        const id=this.props.task._id.toString();
-        // toggle Edit Mode
-        const toggleEditMode = () => {
-            this.setState({editMode:!this.state.editMode})
-        }
-        // wrapper that allows us to call server routine and update local state
-        const saveTask = async (event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, title: string) => {
-            // call server function in parent component (allows state to be updated)
-            this.props.saveTask(event,id,title);
-            // disable editing mode
-            toggleEditMode();
-        }
-        if (this.state.editMode) {
-            return (
-                <li>
-                    <form>
-                        <input type="text" value={this.state.title} onChange={this.handleInputChange} />
-                        <button onClick={(event) => saveTask(event,id,this.state.title)}>Save</button>
-                    </form>           
-                </li>    
-            );
-        } else {
-            return (
-                <li>
-                    {this.props.task.title}
-                    <CompleteTaskButton 
-                        complete={this.props.task.complete} 
-                        id={id} 
-                        completeTask={this.props.completeTask}
-                    />
-                    <button onClick={() => toggleEditMode()}>Edit</button>
-                    <button onClick={() => this.props.deleteTask(id)}>Delete</button>
-                </li>
-            );
-        }  
-    }
-}
-// Togglable task completion button
-interface ICompleteButtonProps {
-    complete:boolean;
-    id: string;
-    completeTask:(id: string, status: boolean) => void;
-}
-class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
-    render() {
-        // assign button text depending on completion status of task
-        let buttonText = this.props.complete ? 'Uncomplete' : 'Complete';
-        return (    
-            <button onClick={() => this.props.completeTask(this.props.id,this.props.complete)}>{buttonText}</button>
-        )
-    }
-}
-// new task entry form
-interface INewTaskEntryProps {
-    addTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, taskTitle: string) => void;
-}
-interface INewTaskEntryState {
-    [key: string]: string;
-}
-class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState> {
-    constructor(props:any) {
-        super(props);
-        this.state = {
-            taskText: '' // task input field
-        }
-        this.handleInputChange = this.handleInputChange.bind(this);
-    }
-    // update state when input field is edited
-    handleInputChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            [target.name]: target.value
-        });
-    }
-    
-    render() {
-        // clear local state (tied to input field) and call parent function to add task
-        const addTask = (event: React.MouseEvent<HTMLElement>,taskTitle: string) => {
-            this.setState({taskText:''}); // resets input field
-            this.props.addTask(event,taskTitle);
-        }
-        return (
-            <form id="newTaskEntry">
-                <input type="text" name="taskText" value={this.state.taskText} onChange={this.handleInputChange} />
-                <button onClick={(event) => addTask(event,this.state.taskText)}>Add Task</button>
-            </form>
-        );
-    }
-}
-// Generic component to dsplay message while waiting for response from server
-interface ILoaderProps {
-    displayFlag:boolean;
-    msg?:string;
-}
-class Loader extends React.Component<ILoaderProps> {
-    render() {
-        return (
-            <div>
-                {this.props.displayFlag ? this.props.msg : false}
-            </div>
-        );
-    }
-}
-// Log in screen
-interface ILoginProps {
-    logIn:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
-}
-interface ILoginState {
-    [key: string]: string;
-}
-class LogIn extends React.Component<ILoginProps,ILoginState> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            username:'',
-            password:''
-        }
-        this.handleInputChange = this.handleInputChange.bind(this);
-    }
-    handleInputChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            [target.name]: target.value
-        });
-    }
-    render() {
-        const logIn = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
-            this.setState({username:'',password:''});
-            this.props.logIn(event,username,password)
-        }
-        return (
-            <form>
-                <h1>Log In</h1>
-                <input 
-                    name="username"
-                    value={this.state.username}
-                    onChange={this.handleInputChange}
-                    type="text" 
-                    placeholder="Username"
-                />
-                <input 
-                    name="password"
-                    value={this.state.password}
-                    onChange={this.handleInputChange}
-                    type="Password" 
-                    placeholder="Password"
-                />
-                <button onClick={(event) => logIn(event,this.state.username,this.state.password)}>Log In</button>
-            </form>
-        )
-    }
-}
-interface ISignupProps {
-    signUp:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
-}
-interface ISignupState {
-    [key: string]: string;
-}
-class SignUp extends React.Component<ISignupProps,ISignupState> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            username:'',
-            password:''
-        }
-        this.handleInputChange = this.handleInputChange.bind(this);
-    }
-    handleInputChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            [target.name]: target.value
-        });
-    }
-    render() {
-        const signUp  = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
-            // clear input fields
-            this.setState({
-                username:'',
-                password:''
-            });
-            // call parent function
-            this.props.signUp(event,username,password)
-        }
-        return (
-            <form>
-                <h1>Sign Up</h1>
-                <input 
-                    type="text"
-                    placeholder="Username"
-                    name="username"
-                    value={this.state.username}
-                    onChange={this.handleInputChange}
-                />
-                <input 
-                    type="password"
-                    placeholder="Password (6+ char. min)"
-                    name="password"
-                    value={this.state.password}
-                    onChange={this.handleInputChange}
-                />
-                <button onClick={(event) => signUp(event,this.state.username,this.state.password)}>Sign Up</button>
-            </form>
-        )
     }
 }
 
