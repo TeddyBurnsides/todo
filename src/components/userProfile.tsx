@@ -2,20 +2,20 @@
 import React from 'react';
 import * as Realm from 'realm-web';
 // constants
-import Constants from './constants';
+import { Constants } from './constants';
 // Connection
 const app = new Realm.App({ id: Constants.appID});
 const mongoUserCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.userColl);
 
 // Edit user information
-interface IUserprofileProps {
+interface UserprofileProps {
     updateUserName:(event:React.FormEvent<EventTarget>,userId:string,newName:string) => void;
     user:string;
 }
-interface IUserprofileState {
+interface UserprofileState {
     [key: string]: string;
 }
-class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
+export class UserProfile extends React.Component<UserprofileProps,UserprofileState> {
     constructor(props: any) {
         super(props);
         this.state = {
@@ -63,5 +63,3 @@ class UserProfile extends React.Component<IUserprofileProps,IUserprofileState> {
         );
     }
 }
-
-export default UserProfile;

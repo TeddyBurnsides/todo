@@ -4,28 +4,28 @@ import ReactDOM from 'react-dom';
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Components
-import SignUp from './components/signUp';
-import LogIn from './components/logIn';
-import Loader from './components/loader';
-import NewTaskEntry from './components/newTaskEntry';
-import TaskList from './components/taskList';
-import UserProfile from './components/userProfile';
+import {SignUp} from './components/signUp';
+import {LogIn} from './components/logIn';
+import {Loader} from './components/loader';
+import {NewTaskEntry} from './components/newTaskEntry';
+import {TaskList} from './components/taskList';
+import {UserProfile} from './components/userProfile';
 // Constants
-import Constants from './components/constants';
+import {Constants} from './components/constants';
 // Interfaces
-import ITask from './components/ITask';
+import {ITask} from './components/ITask';
 // Connection
 const app = new Realm.App({ id: Constants.appID});
 const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.taskColl);
 const mongoUserCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.userColl);
 
 // Main App
-interface IAppState {
+interface AppState {
     tasks: Array<ITask>;
     user: string;
     msgBanner: {show:boolean, msg?:string};
 }
-class App extends React.Component<{},IAppState> {
+class App extends React.Component<{},AppState> {
     constructor(props: never) {
         super(props);
         this.state = {
@@ -65,7 +65,7 @@ class App extends React.Component<{},IAppState> {
             // starting loading animation
             this.setState({msgBanner:{show:true,msg:'Adding in progress'}});
             // don't continue if invalid task
-            if (isInvalidTask(taskTitle)) {
+            if (isInvalidTaskTitle(taskTitle)) {
                 this.setState({msgBanner:{show:true,msg:'Invalid task'}});
             } else {
                 // server operations
@@ -100,7 +100,7 @@ class App extends React.Component<{},IAppState> {
                 }
             }   
         }
-        const isInvalidTask = (taskTitle: string|null) => {
+        const isInvalidTaskTitle = (taskTitle: string|null) => {
             if (taskTitle === '' || taskTitle == null) return true;
             return false;
         }

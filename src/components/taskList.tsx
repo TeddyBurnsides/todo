@@ -1,17 +1,18 @@
-// components
+// core imports
 import React from 'react';
-import Task from './task';
+// components
+import {Task} from './task';
 // interfaces
-import ITask from './ITask';
+import {ITask} from './ITask';
 
 // Full task list (composed of many Task components)
-interface ITaskListProps {
+interface TaskListProps {
     tasks:Array<ITask>;
     deleteTask:(id: string) => void;
     completeTask:(id: string, status:boolean) => void;
     saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
 }
-class TaskList extends React.Component<ITaskListProps> {
+export class TaskList extends React.Component<TaskListProps> {
     render() {    
         let taskList = this.props.tasks.map((task:ITask) => {
             return(
@@ -33,5 +34,3 @@ class TaskList extends React.Component<ITaskListProps> {
         }
     }
 }
-
-export default TaskList;

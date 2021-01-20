@@ -1,22 +1,23 @@
-// components
+// core imports
 import React from 'react';
-import CompleteTaskButton from './completeTaskButton';
+// components
+import {CompleteTaskButton} from './completeTaskButton';
 // interfaces
-import ITask from './ITask';
+import {ITask} from './ITask';
 
 // Individual Task
-interface ITaskProps {
+interface TaskProps {
     key: string;
     task: ITask;
     deleteTask:(id: string) => void;
     completeTask:(id: string, status:boolean) => void;
     saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
 }
-interface ITaskState {
+interface TaskState {
     editMode:boolean;
     title: string;
 }
-class Task extends React.Component<ITaskProps,ITaskState> {
+export class Task extends React.Component<TaskProps,TaskState> {
     constructor(props: any) {
         super(props);
         this.state = {
@@ -69,5 +70,3 @@ class Task extends React.Component<ITaskProps,ITaskState> {
         }  
     }
 }
-
-export default Task;

@@ -1,11 +1,12 @@
+// core imports
 import React from 'react';
 
 // Generic component to dsplay message while waiting for response from server
-interface ILoaderProps {
+interface LoaderProps {
     displayFlag:boolean;
     msg?:string;
 }
-class Loader extends React.Component<ILoaderProps> {
+export class Loader extends React.Component<LoaderProps> {
     render() {
         return (
             <div>
@@ -14,5 +15,3 @@ class Loader extends React.Component<ILoaderProps> {
         );
     }
 }
-
-export default Loader;

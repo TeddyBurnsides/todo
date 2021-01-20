@@ -1,12 +1,13 @@
+// core imports
 import React from 'react';
 
-interface ISignupProps {
+interface SignupProps {
     signUp:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
 }
-interface ISignupState {
+interface SignupState {
     [key: string]: string;
 }
-class SignUp extends React.Component<ISignupProps,ISignupState> {
+export class SignUp extends React.Component<SignupProps,SignupState> {
     constructor(props: any) {
         super(props);
         this.state = {
@@ -52,5 +53,3 @@ class SignUp extends React.Component<ISignupProps,ISignupState> {
         )
     }
 }
-
-export default SignUp;

@@ -1,13 +1,14 @@
+// core imports
 import React from 'react';
 
 // new task entry form
-interface INewTaskEntryProps {
+interface NewTaskEntryProps {
     addTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, taskTitle: string) => void;
 }
-interface INewTaskEntryState {
+interface NewTaskEntryState {
     [key: string]: string;
 }
-class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState> {
+export class NewTaskEntry extends React.Component<NewTaskEntryProps,NewTaskEntryState> {
     constructor(props:any) {
         super(props);
         this.state = {
@@ -36,5 +37,3 @@ class NewTaskEntry extends React.Component<INewTaskEntryProps,INewTaskEntryState
         );
     }
 }
-
-export default NewTaskEntry;

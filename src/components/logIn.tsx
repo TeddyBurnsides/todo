@@ -1,13 +1,14 @@
+// core imports
 import React from 'react';
 
 // Log in screen
-interface ILoginProps {
+interface LoginProps {
     logIn:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
 }
-interface ILoginState {
+interface LoginState {
     [key: string]: string;
 }
-class LogIn extends React.Component<ILoginProps,ILoginState> {
+export class LogIn extends React.Component<LoginProps,LoginState> {
     constructor(props: any) {
         super(props);
         this.state = {
@@ -48,5 +49,3 @@ class LogIn extends React.Component<ILoginProps,ILoginState> {
         )
     }
 }
-
-export default LogIn;

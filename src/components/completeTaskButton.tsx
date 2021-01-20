@@ -1,3 +1,4 @@
+// core imports
 import React from 'react';
 
 // Togglable task completion button
@@ -6,7 +7,7 @@ interface ICompleteButtonProps {
     id: string;
     completeTask:(id: string, status: boolean) => void;
 }
-class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
+export class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
     render() {
         // assign button text depending on completion status of task
         let buttonText = this.props.complete ? 'Uncomplete' : 'Complete';
@@ -15,5 +16,3 @@ class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
         )
     }
 }
-
-export default CompleteTaskButton;
