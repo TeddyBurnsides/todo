@@ -31,8 +31,8 @@ export class NewTaskEntry extends React.Component<NewTaskEntryProps,NewTaskEntry
         }
         return (
             <form id="newTaskEntry">
-                <input type="text" name="taskText" value={this.state.taskText} onChange={this.handleInputChange} />
-                <button onClick={(event) => addTask(event,this.state.taskText)}>Add Task</button>
+                <input placeholder="Add new task..." type="text" name="taskText" value={this.state.taskText} onChange={this.handleInputChange} />
+                <button onClick={(event) => addTask(event,this.state.taskText)}>→</button>
             </form>
         );
     }

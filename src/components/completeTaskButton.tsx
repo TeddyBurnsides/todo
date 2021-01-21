@@ -9,10 +9,9 @@ interface ICompleteButtonProps {
 }
 export class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
     render() {
-        // assign button text depending on completion status of task
-        let buttonText = this.props.complete ? 'Uncomplete' : 'Complete';
         return (    
-            <button onClick={() => this.props.completeTask(this.props.id,this.props.complete)}>{buttonText}</button>
+            <button className="completeButton" onClick={() => this.props.completeTask(this.props.id,this.props.complete)}>✓</button>
         )
+        
     }
 }

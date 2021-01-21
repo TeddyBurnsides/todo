@@ -45,26 +45,32 @@ export class Task extends React.Component<TaskProps,TaskState> {
             // disable editing mode
             toggleEditMode();
         }
+        const taskClass = this.props.task.complete ? 'completed' : '';
         if (this.state.editMode) {
             return (
-                <li>
-                    <form>
+                <li className={`task ${taskClass}`}>
+                    <CompleteTaskButton 
+                        complete={this.props.task.complete} 
+                        id={id} 
+                        completeTask={this.props.completeTask}
+                    />
+                    <form className="editForm">
                         <input type="text" value={this.state.title} onChange={this.handleInputChange} />
                         <button onClick={(event) => saveTask(event,id,this.state.title)}>Save</button>
                     </form>           
                 </li>    
             );
         } else {
+            
             return (
-                <li>
-                    {this.props.task.title}
+                <li className={`task ${taskClass}`}>        
                     <CompleteTaskButton 
                         complete={this.props.task.complete} 
                         id={id} 
                         completeTask={this.props.completeTask}
                     />
-                    <button onClick={() => toggleEditMode()}>Edit</button>
-                    <button onClick={() => this.props.deleteTask(id)}>Delete</button>
+                    <span className="title" onClick={() => toggleEditMode()}>{this.props.task.title}</span>
+                    <button className="deleteButton" onClick={() => this.props.deleteTask(id)}>✕</button>
                 </li>
             );
         }  

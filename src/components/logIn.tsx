@@ -28,7 +28,7 @@ export class LogIn extends React.Component<LoginProps,LoginState> {
             this.props.logIn(event,username,password)
         }
         return (
-            <form>
+            <form id="loginForm">
                 <h1>Log In</h1>
                 <input 
                     name="username"
@@ -45,6 +45,7 @@ export class LogIn extends React.Component<LoginProps,LoginState> {
                     placeholder="Password"
                 />
                 <button onClick={(event) => logIn(event,this.state.username,this.state.password)}>Log In</button>
+                <div className="clear"></div>
             </form>
         )
     }

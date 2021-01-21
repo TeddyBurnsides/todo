@@ -32,7 +32,7 @@ export class SignUp extends React.Component<SignupProps,SignupState> {
             this.props.signUp(event,username,password)
         }
         return (
-            <form>
+            <form id="signupForm">
                 <h1>Sign Up</h1>
                 <input 
                     type="text"
@@ -49,6 +49,7 @@ export class SignUp extends React.Component<SignupProps,SignupState> {
                     onChange={this.handleInputChange}
                 />
                 <button onClick={(event) => signUp(event,this.state.username,this.state.password)}>Sign Up</button>
+                <div className="clear"></div>
             </form>
         )
     }

@@ -11,9 +11,12 @@ import {NewTaskEntry} from './components/newTaskEntry';
 import {TaskList} from './components/taskList';
 import {UserProfile} from './components/userProfile';
 // Constants
-import {Constants} from './components/constants';
+import {Constants,Msgs} from './components/constants';
 // Interfaces
 import {ITask} from './components/ITask';
+// Styles
+import './styles.css'
+
 // Connection
 const app = new Realm.App({ id: Constants.appID});
 const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.taskColl);
@@ -63,16 +66,16 @@ class App extends React.Component<{},AppState> {
             // prevent page from refreshing
             event.preventDefault(); 
             // starting loading animation
-            this.setState({msgBanner:{show:true,msg:'Adding in progress'}});
+            this.setState({msgBanner:{show:true,msg:Msgs.addingTask}});
             // don't continue if invalid task
             if (isInvalidTaskTitle(taskTitle)) {
-                this.setState({msgBanner:{show:true,msg:'Invalid task'}});
+                this.setState({msgBanner:{show:true,msg:Msgs.invalidTask}});
             } else {
                 // server operations
                 try {
                     // check for valid user info
                     if (this.state.user == null) {
-                        this.setState({msgBanner:{show:true,msg:'User error'}});
+                        this.setState({msgBanner:{show:true,msg:Msgs.missingUser}});
                         throw new Error('Invalid user info');
                     }
                     // server operation
@@ -112,6 +115,8 @@ class App extends React.Component<{},AppState> {
                 }));
                 // clear local storage (stop "remembering" user info)
                 localStorage.setItem('user','');
+                // clear any notifications hanging around
+                this.setState({msgBanner: {show:false}});
             } catch(error) {
                 throw(error);
             }
@@ -176,13 +181,11 @@ class App extends React.Component<{},AppState> {
         const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
             // prevent page refresh
             event.preventDefault();
-            console.log(username,password);
-            console.log(app);
             // validate inputs else showing loading indicator
             if (isInvalidUsername(username) || isInvalidPassword(password)) {
-                this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
+                this.setState({msgBanner: {show:true,msg:Msgs.invalidCreds}});
             } else {
-                this.setState({msgBanner: {show:true,msg:'Logging in...'}});
+                this.setState({msgBanner: {show:true,msg:Msgs.loggingIn}});
                 // Create an anonymous credential
                 let credentials=Realm.Credentials.emailPassword(username, password);
                 let user = null;
@@ -197,12 +200,12 @@ class App extends React.Component<{},AppState> {
                     this.setState({msgBanner:{show:false}})
                 } catch {
                     // trigger warning banner
-                    this.setState({msgBanner:{show:true,msg:'Login Failed'}});
+                    this.setState({msgBanner:{show:true,msg:Msgs.failedLogin}});
                 }
                 // load posts if login was successful
                 if (user) {
                     // start loading posts indicator
-                    this.setState({msgBanner:{show:true,msg:'Loading Tasks'}});
+                    this.setState({msgBanner:{show:true,msg:Msgs.loadingTasks}});
                     // get posts from server
                     (async () => {
                         try {
@@ -216,7 +219,7 @@ class App extends React.Component<{},AppState> {
                     })();
                 } else {
                     // if no user, then login failed
-                    this.setState({msgBanner: {show:true,msg:'Login Failed'}});
+                    this.setState({msgBanner: {show:true,msg:Msgs.failedLogin}});
                 }
             }
         }
@@ -225,18 +228,18 @@ class App extends React.Component<{},AppState> {
             event.preventDefault();
             // validate input else showing in progress indicator
             if (isInvalidPassword(password) || isInvalidUsername(username)) {
-                this.setState({msgBanner: {show:true,msg:'Invalid username or password'}});
+                this.setState({msgBanner: {show:true,msg:Msgs.invalidCreds}});
             } else {
                 // in progress banner
-                this.setState({msgBanner: {show:true,msg:'Signing up...'}});
+                this.setState({msgBanner: {show:true,msg:Msgs.signingUp}});
                 // server request to create user
                 try {
                     await app.emailPasswordAuth.registerUser(username,password);
                     // show success banner
-                    this.setState({msgBanner: {show:true,msg:'Successfully signed up! Please log in.'}});
+                    this.setState({msgBanner: {show:true,msg:Msgs.successfulSignup}});
                 } catch {
                     // show failure banner
-                    this.setState({msgBanner: {show:true,msg:'Sign up failed.'}});
+                    this.setState({msgBanner: {show:true,msg:Msgs.failedSignup}});
                 }
             }
         }
@@ -252,7 +255,7 @@ class App extends React.Component<{},AppState> {
             // stop page refresh
             event.preventDefault();
             // in progress banner
-            this.setState({msgBanner: {show:true, msg:'Changing Name...'}})
+            this.setState({msgBanner: {show:true, msg:Msgs.changingName}})
             // server ops
             try {
                 await mongoUserCollection.updateOne(
@@ -260,22 +263,22 @@ class App extends React.Component<{},AppState> {
                     {$set: {'prettyName': newName}} // update user's name
                 );
                 // success banner
-                this.setState({msgBanner: {show: true, msg:'Name Changed!'}})
+                this.setState({msgBanner: {show: true, msg:Msgs.successfulNameChange}})
             } catch {
                 console.log('failed to update user name.');
             }
-            
         }
         // if logged in
         if (this.state.user) {
             return (
                 <div>
+                    <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                     <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
                     <NewTaskEntry addTask={addTask} />
                     <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
                     <UserProfile updateUserName={updateUserName} user={this.state.user} />
                     <br />
-                    <button onClick={() => logout()}>Log Out</button>
+                    
                 </div>  
             );
         // if not logged in

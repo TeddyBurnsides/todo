@@ -8,10 +8,21 @@ interface LoaderProps {
 }
 export class Loader extends React.Component<LoaderProps> {
     render() {
-        return (
-            <div>
-                {this.props.displayFlag ? this.props.msg : false}
-            </div>
-        );
+        if (this.props.displayFlag) {
+            return (
+                <div className="notification">
+                    <span className="visible">
+                        {this.props.msg}
+                    </span>
+                </div>
+            );
+        } else {
+            return (
+                <div className="notification">
+                    <span></span>
+                </div>
+            );
+        }
+        
     }
 }
