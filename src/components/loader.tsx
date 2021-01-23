@@ -19,7 +19,9 @@ export class Loader extends React.Component<LoaderProps> {
         } else {
             return (
                 <div className="notification">
-                    <span></span>
+                    <span>
+                        {this.props.msg}
+                    </span>
                 </div>
             );
         }

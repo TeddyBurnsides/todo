@@ -30,7 +30,7 @@ export class TaskList extends React.Component<TaskListProps> {
             return <p>No tasks</p>
         // if not loading, and we have tasks
         } else {
-            return <ul>{taskList}</ul>
+            return <ul id="taskList">{taskList}</ul>
         }
     }
 }

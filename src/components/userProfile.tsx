@@ -46,19 +46,18 @@ export class UserProfile extends React.Component<UserprofileProps,UserprofileSta
     }
     render() {
         return (
-            <form>
-                <h2>Profile</h2>
-                <label>Username: </label>
-                <span>{this.state.username}</span>
-                <br />
-                <label>Name: </label>
+            <form className="standard">
+                <h1>Account Info</h1>
+                <label>Username</label>
+                <input type="text" value={this.state.username} readOnly />
+                <label>Full Name</label>
                 <input
                     type="text"
                     value={this.state.prettyUsername}
                     name="prettyUsername"
                     onChange={this.handleInputChange}
                 />
-                <button onClick={(event) => this.props.updateUserName(event,this.props.user,this.state.prettyUsername)}>Save Changes</button>
+                <button onClick={(event) => this.props.updateUserName(event,this.props.user,this.state.prettyUsername)}>Save</button>
             </form>
         );
     }

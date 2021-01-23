@@ -32,18 +32,18 @@ export class SignUp extends React.Component<SignupProps,SignupState> {
             this.props.signUp(event,username,password)
         }
         return (
-            <form id="signupForm">
+            <form className="standard">
                 <h1>Sign Up</h1>
+                <label>Username</label>
                 <input 
                     type="text"
-                    placeholder="Username"
                     name="username"
                     value={this.state.username}
                     onChange={this.handleInputChange}
                 />
+                <label>Password (6 character minimum)</label>
                 <input 
                     type="password"
-                    placeholder="Password (6+ char. min)"
                     name="password"
                     value={this.state.password}
                     onChange={this.handleInputChange}

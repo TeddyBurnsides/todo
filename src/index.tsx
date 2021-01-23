@@ -72,7 +72,10 @@ class App extends React.Component<{},AppState> {
                 this.setState({msgBanner:{show:true,msg:Msgs.invalidTask}});
                 // hide the failer banner
                 setTimeout(() => {
-                    this.setState({msgBanner:{show:false}});
+                    // modify temp object to maintain existing properties
+                    const tempMsgBanner=this.state.msgBanner;
+                    tempMsgBanner.show=false;
+                    this.setState({msgBanner:tempMsgBanner});
                 },2000);
             } else {
                 // server operations
@@ -101,7 +104,12 @@ class App extends React.Component<{},AppState> {
                         return {tasks:state.tasks}
                     });
                     // clear loading animation
-                    this.setState({msgBanner:{show:false}});
+                    setTimeout(() => {
+                        // modify temp object to maintain existing properties
+                        const tempMsgBanner=this.state.msgBanner;
+                        tempMsgBanner.show=false;
+                        this.setState({msgBanner:tempMsgBanner});
+                    },300);
                 } catch(error) {
                     throw(error);
                 }
@@ -185,46 +193,49 @@ class App extends React.Component<{},AppState> {
         const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
             // prevent page refresh
             event.preventDefault();
-            // validate inputs else showing loading indicator
-            if (isInvalidUsername(username) || isInvalidPassword(password)) {
-                this.setState({msgBanner: {show:true,msg:Msgs.invalidCreds}});
+            // start banner
+            this.setState({msgBanner: {show:true,msg:Msgs.loggingIn}});
+            // Create an anonymous credential
+            let credentials=Realm.Credentials.emailPassword(username, password);
+            let user = null;
+            try {
+                // Authenticate the user
+                user = await app.logIn(credentials);
+                // update state to trigger page refresh
+                this.setState({user:user.id});
+                // save off to local storage so it will persist on refresh
+                if (this.state.user != null) localStorage.setItem('user',this.state.user)
+                // reset any warnings messages
+                this.setState({msgBanner:{show:false}})
+            } catch {
+                // trigger warning banner
+                this.setState({msgBanner:{show:true,msg:Msgs.failedLogin}});
+            }
+            // load posts if login was successful
+            if (user) {
+                // start loading posts indicator
+                this.setState({msgBanner:{show:true,msg:Msgs.loadingTasks}});
+                // get posts from server
+                (async () => {
+                    try {
+                        const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
+                        this.setState({tasks:tasks})
+                        // finish task loading animation
+                        this.setState({msgBanner:{show:false}});
+                    } catch {
+                        throw new Error('Failed to retrieve tasks');
+                    }
+                })();
             } else {
-                this.setState({msgBanner: {show:true,msg:Msgs.loggingIn}});
-                // Create an anonymous credential
-                let credentials=Realm.Credentials.emailPassword(username, password);
-                let user = null;
-                try {
-                    // Authenticate the user
-                    user = await app.logIn(credentials);
-                    // update state to trigger page refresh
-                    this.setState({user:user.id});
-                    // save off to local storage so it will persist on refresh
-                    if (this.state.user != null) localStorage.setItem('user',this.state.user)
-                    // reset any warnings messages
-                    this.setState({msgBanner:{show:false}})
-                } catch {
-                    // trigger warning banner
-                    this.setState({msgBanner:{show:true,msg:Msgs.failedLogin}});
-                }
-                // load posts if login was successful
-                if (user) {
-                    // start loading posts indicator
-                    this.setState({msgBanner:{show:true,msg:Msgs.loadingTasks}});
-                    // get posts from server
-                    (async () => {
-                        try {
-                            const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
-                            this.setState({tasks:tasks})
-                            // finish task loading animation
-                            this.setState({msgBanner:{show:false}});
-                        } catch {
-                            throw new Error('Failed to retrieve tasks');
-                        }
-                    })();
-                } else {
-                    // if no user, then login failed
-                    this.setState({msgBanner: {show:true,msg:Msgs.failedLogin}});
-                }
+                // if no user, then login failed
+                this.setState({msgBanner: {show:true,msg:Msgs.failedLogin}});
+                // hide warning
+                setTimeout(() => {
+                    // modify temp object to maintain existing properties
+                    const tempMsgBanner=this.state.msgBanner;
+                    tempMsgBanner.show=false;
+                    this.setState({msgBanner:tempMsgBanner});
+                },2000);
             }
         }
         const signUp = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
@@ -270,7 +281,10 @@ class App extends React.Component<{},AppState> {
                 this.setState({msgBanner: {show: true, msg:Msgs.successfulNameChange}})
                 // hide the success banner
                 setTimeout(() => {
-                    this.setState({msgBanner:{show:false}});
+                    // modify temp object to maintain existing properties
+                    const tempMsgBanner=this.state.msgBanner;
+                    tempMsgBanner.show=false;
+                    this.setState({msgBanner:tempMsgBanner});
                 },2000);
             } catch {
                 console.log('failed to update user name.');
@@ -283,10 +297,9 @@ class App extends React.Component<{},AppState> {
                     <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                     <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
                     <NewTaskEntry addTask={addTask} />
+                    <h1>All Tasks</h1>
                     <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
                     <UserProfile updateUserName={updateUserName} user={this.state.user} />
-                    <br />
-                    
                 </div>  
             );
         // if not logged in
