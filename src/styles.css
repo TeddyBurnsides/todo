@@ -60,7 +60,7 @@ table {
 } 
 #root {
     background:#fff;
-    font:11pt/1 'Helvetica';
+    font:11pt/1 'Helvetica Neue','Helvetica',Arial;
     padding:0px 50px 50px 50px;
     width:350px;
     margin:0 auto;
@@ -245,6 +245,9 @@ LOGIN AND SIGNUP
     margin:0 0 20px 0;
     color:#333;
     letter-spacing:-.3px;
+}
+#loginForm h1 {
+    margin:100px 0 20px 0;
 }
 #loginForm {
     margin:0 0 50px 0;

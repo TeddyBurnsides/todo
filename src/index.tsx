@@ -70,6 +70,10 @@ class App extends React.Component<{},AppState> {
             // don't continue if invalid task
             if (isInvalidTaskTitle(taskTitle)) {
                 this.setState({msgBanner:{show:true,msg:Msgs.invalidTask}});
+                // hide the failer banner
+                setTimeout(() => {
+                    this.setState({msgBanner:{show:false}});
+                },2000);
             } else {
                 // server operations
                 try {
@@ -264,6 +268,10 @@ class App extends React.Component<{},AppState> {
                 );
                 // success banner
                 this.setState({msgBanner: {show: true, msg:Msgs.successfulNameChange}})
+                // hide the success banner
+                setTimeout(() => {
+                    this.setState({msgBanner:{show:false}});
+                },2000);
             } catch {
                 console.log('failed to update user name.');
             }
