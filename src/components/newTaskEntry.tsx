@@ -33,6 +33,12 @@ export class NewTaskEntry extends React.Component<NewTaskEntryProps,NewTaskEntry
             <form id="newTaskEntry">
                 <input placeholder="Enter new task..." type="text" name="taskText" value={this.state.taskText} onChange={this.handleInputChange} />
                 <button onClick={(event) => addTask(event,this.state.taskText)}></button>
+                <div className="details">
+                    <label>Due Date:</label>
+                    <input type="date" />
+                    <div className="clear"></div>
+                </div>
+                <div className="clear"></div>
             </form>
         );
     }
