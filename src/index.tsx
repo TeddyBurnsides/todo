@@ -1,6 +1,7 @@
 // Core imports
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { BrowserRouter as Router, Route, Switch, Link } from "react-router-dom";
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Components
@@ -293,14 +294,28 @@ class App extends React.Component<{},AppState> {
         // if logged in
         if (this.state.user) {
             return (
-                <div>
-                    <button id="logoutButton" onClick={() => logout()}>Log Out</button>
-                    <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
-                    <NewTaskEntry addTask={addTask} />
-                    <h1>All Tasks</h1>
-                    <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
-                    <UserProfile updateUserName={updateUserName} user={this.state.user} />
-                </div>  
+                <Router><Switch>
+                <Route path='/' exact
+                    render={() => (
+                        <div>
+                            <Link to='/settings/'>Settings</Link>
+                            <button id="logoutButton" onClick={() => logout()}>Log Out</button>
+                            <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
+                            <NewTaskEntry addTask={addTask} />
+                            <h1>All Tasks</h1>
+                            <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
+                        </div>
+                    )}
+                />
+                <Route path='/settings/'
+                    render={() => (
+                        <div>
+                            <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
+                            <UserProfile updateUserName={updateUserName} user={this.state.user} />
+                        </div>       
+                    )}        
+                />  
+                </Switch></Router>
             );
         // if not logged in
         } else {

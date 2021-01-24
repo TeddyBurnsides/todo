@@ -1,6 +1,7 @@
 // core imports 
 import React from 'react';
 import * as Realm from 'realm-web';
+import {Link} from 'react-router-dom';
 // constants
 import { Constants } from './constants';
 // Connection
@@ -47,9 +48,11 @@ export class UserProfile extends React.Component<UserprofileProps,UserprofileSta
     render() {
         return (
             <form className="standard">
-                <h1>Account Info</h1>
+                <Link className="backLink" to='/'><button>&larr; Tasks</button>/</Link>
+                <h1>Settings</h1>
+                <div className="clear"></div>
                 <label>Username</label>
-                <input type="text" value={this.state.username} readOnly />
+                <input type="text" value={this.state.username} disabled />
                 <label>Full Name</label>
                 <input
                     type="text"

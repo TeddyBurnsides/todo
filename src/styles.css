@@ -64,7 +64,7 @@ BODY
 #root {
     background:#fff;
     font:11pt/1 'Helvetica Neue','Helvetica',Arial;
-    padding:0px 50px 50px 50px;
+    padding:100px 50px 50px 50px;
     width:370px;
     margin:0 auto;
     position:relative;
@@ -76,8 +76,9 @@ LOADER
     height:35px;
     width:350px;
     position:absolute;
-    top:-100px;
+    top:0px;
     text-align:center;
+    z-index:1000;
 }
 .notification span {
     background:#f75077;
@@ -114,7 +115,7 @@ LOGOUT
 NEW TASK FORM
 */
 #newTaskEntry {
-    margin:100px 0 50px 0;
+    margin:0 0 50px 0;
     height:50px;
     position:relative;
 }
@@ -273,10 +274,33 @@ GENERIC FORMS
 */
 h1 {
     font-size:17pt;
+    line-height:30px;
     margin:0 0 30px 0;
     color:#333;
     font-weight:600;
     letter-spacing:-.5px;
+}
+.backLink { 
+    text-decoration:none;
+    float:left;
+    padding:0 10px 0 0;
+    line-height:30px;
+    color:#aaa;
+    font-size:17pt;
+}
+.backLink button {
+    letter-spacing:-.5px;
+    border:0;
+    background:transparent;
+    border-radius:8px;
+    height:30px;
+    font-size:inherit;
+    color:#aaa;
+    font-weight:400;
+    cursor:pointer;
+}
+.backLink button:hover {
+    color:#333;
 }
 form.standard label {
     display:block;
@@ -296,11 +320,15 @@ form.standard input[type="text"], form.standard input[type="password"] {
     width:calc(100% - 33px);
     margin:0 0 20px 0;
 }
+form.standard input:disabled {
+    color:#999;
+    background:#f4f4f4;
+}
 form.standard input[type="text"]:focus, form.standard input[type="password"]:focus {  
     color:#316add;
     border:1px solid #ABC3F2;
 }
-form.standard button {
+form.standard > button {
     background:#316add;
     margin:0;
     border:0;
@@ -312,6 +340,6 @@ form.standard button {
     float:right;
     cursor:pointer;
 }
-form.standard button:hover {
+form.standard > button:hover {
     background:#3872e6;
 }
