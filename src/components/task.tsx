@@ -70,7 +70,9 @@ export class Task extends React.Component<TaskProps,TaskState> {
                         completeTask={this.props.completeTask}
                     />
                     <span className="title" onClick={() => toggleEditMode()}>{this.props.task.title}</span>
+                    <span className="date">13 july 2020</span>
                     <button className="deleteButton" onClick={() => this.props.deleteTask(id)}>✕</button>
+                    <div className="clear"></div>
                 </li>
             );
         }  

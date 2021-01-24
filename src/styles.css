@@ -154,11 +154,8 @@ TASK LIST
 }
 .task {
     margin:0 0 25px 0;
-    height:30px;
+    min-height:30px;
     position:Relative;
-}
-.task > * {
-    position:absolute;
 }
 .task .completeButton {
     height:30px;
@@ -166,7 +163,6 @@ TASK LIST
     background:transparent;
     border-radius:100px;
     float:left;
-    left:0;
     cursor:pointer;
     border:2px solid #d4d4d4;
 }
@@ -181,8 +177,9 @@ TASK LIST
 }
 .task .title {
     font-size:14pt;
-    line-height:30px;
-    left:45px;
+    line-height:24px;
+    padding:3px 0 3px 14px;
+    float:left;
     letter-spacing:-.4px;
     color:#3f527b;
     width:290px;
@@ -190,6 +187,17 @@ TASK LIST
 .task.completed .title {
     color:#a7b6d2;
     text-decoration:line-through;
+}
+.task .date {
+    float:left;
+    padding:0 0 0 44px;
+    text-transform:uppercase;
+    font-size:8pt;
+    font-weight:600;
+    color:#a7b6d2;
+}
+.task.completed .date {
+    color:#ccd7e9;
 }
 .task .editButton,.task .deleteButton {
     right:30px;
@@ -202,6 +210,8 @@ TASK LIST
 }
 .task .deleteButton {
     right:0;
+    top:0;
+    position:absolute;
 }
 .task .editButton:hover, .task .deleteButton:hover {
     color:#666;
