@@ -298,12 +298,17 @@ class App extends React.Component<{},AppState> {
                 <Route path='/' exact
                     render={() => (
                         <div>
-                            <Link to='/settings/'>Settings</Link>
-                            <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                             <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
+                            <div id="nav">
+                                <h1 id="taskTitle">Tasks</h1>
+                                
+                                <Link to='/settings/'>Settings</Link>
+                                
+                                <div className="clear"></div>
+                            </div>
                             <NewTaskEntry addTask={addTask} />
-                            <h1>All Tasks</h1>
                             <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
+                            <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                         </div>
                     )}
                 />

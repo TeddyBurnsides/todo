@@ -48,9 +48,13 @@ export class UserProfile extends React.Component<UserprofileProps,UserprofileSta
     render() {
         return (
             <form className="standard">
-                <Link className="backLink" to='/'><button>&larr; Tasks</button>/</Link>
-                <h1>Settings</h1>
-                <div className="clear"></div>
+                <Link className="backLink" to='/'><button>← Return to tasks</button></Link>
+                <div id="nav">
+                    <h1 id="settingsTitle">Settings</h1>
+                    <div className="clear"></div>
+                </div>
+               
+                
                 <label>Username</label>
                 <input type="text" value={this.state.username} disabled />
                 <label>Full Name</label>
