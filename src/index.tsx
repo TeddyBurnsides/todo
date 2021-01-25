@@ -308,6 +308,7 @@ class App extends React.Component<{},AppState> {
                 <Route path='/' exact
                     render={() => (
                         <div>
+                            <div id="blur"></div>
                             <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
                             <div id="nav">
                                 <h1 id="taskTitle">Tasks</h1>
