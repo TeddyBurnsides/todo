@@ -4,4 +4,5 @@ export interface ITask {
     status: boolean;
     title: string;
     user: string;
+    dueDate?: number;
 }

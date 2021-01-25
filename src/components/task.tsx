@@ -61,7 +61,18 @@ export class Task extends React.Component<TaskProps,TaskState> {
                 </li>    
             );
         } else {
-            
+            const formatDate = (date: number) => {
+                if (date == null) return '';
+                if (date === 0) return '';
+                let dateObject = new Date(date)
+                const monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+                const month = monthNames[dateObject.getMonth()];
+                const day = dateObject.getDate();
+                const year = dateObject.getFullYear();
+                return day + " " + month + " " + year;
+            }
             return (
                 <li className={`task ${taskClass}`}>        
                     <CompleteTaskButton 
@@ -70,7 +81,7 @@ export class Task extends React.Component<TaskProps,TaskState> {
                         completeTask={this.props.completeTask}
                     />
                     <span className="title" onClick={() => toggleEditMode()}>{this.props.task.title}</span>
-                    <span className="date">13 july 2020</span>
+                    <span className="date">{formatDate(this.props.task.dueDate)}</span>
                     <button className="deleteButton" onClick={() => this.props.deleteTask(id)}>✕</button>
                     <div className="clear"></div>
                 </li>

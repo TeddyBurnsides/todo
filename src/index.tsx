@@ -63,7 +63,7 @@ class App extends React.Component<{},AppState> {
         }
     }
     render() {
-        const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string): Promise<void> => {
+        const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string, dueDate: string): Promise<void> => {
             // prevent page from refreshing
             event.preventDefault(); 
             // starting loading animation
@@ -86,24 +86,34 @@ class App extends React.Component<{},AppState> {
                         this.setState({msgBanner:{show:true,msg:Msgs.missingUser}});
                         throw new Error('Invalid user info');
                     }
-                    // server operation
-                    const newID = await mongoTaskCollection.insertOne({
-                        title:taskTitle,
-                        status:true,
-                        complete:false,
-                        user:this.state.user
-                    });
-                    // update state with new task (for real time updates on page)
-                    this.setState((state) => {
-                        state.tasks.push({
-                            _id: new bson.ObjectId(newID.insertedId.id), // extract actual ID
-                            title: taskTitle,
-                            status: true,
-                            complete: false,
-                            user:this.state.user
+                    // server operation (only send due date if entered)
+                    if (dueDate !== '') {
+                        // get date string for server storage
+                        const localDueDate=Date.parse(dueDate.replace(/-/g,"/"));
+                        // insert task
+                        const newID = await mongoTaskCollection.insertOne({
+                            title:taskTitle,status:true,complete:false,user:this.state.user,dueDate:localDueDate
                         });
-                        return {tasks:state.tasks}
-                    });
+                        // update state with new task (for real time updates on page)
+                        this.setState((state) => {
+                            state.tasks.push({
+                                _id:new bson.ObjectId(newID.insertedId.id),title:taskTitle,status:true,complete:false,user:this.state.user,dueDate:localDueDate
+                            });
+                            return {tasks:state.tasks}
+                        });
+                    } else {
+                        const newID = await mongoTaskCollection.insertOne({
+                            title:taskTitle,status:true,complete:false,user:this.state.user
+                        }); 
+                        // update state with new task (for real time updates on page)
+                        this.setState((state) => {
+                            state.tasks.push({
+                                _id:new bson.ObjectId(newID.insertedId.id),title:taskTitle,status:true,complete:false,user:this.state.user
+                            });
+                            return {tasks:state.tasks}
+                        });    
+                    }
+                    
                     // clear loading animation
                     setTimeout(() => {
                         // modify temp object to maintain existing properties

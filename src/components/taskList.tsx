@@ -27,7 +27,7 @@ export class TaskList extends React.Component<TaskListProps> {
         }).reverse(); // puts most recent task on top
         // if still loading tasks
         if (taskList.length === 0) {
-            return <p>No tasks</p>
+            return <ul id="taskList">No tasks created yet!</ul>
         // if not loading, and we have tasks
         } else {
             return <ul id="taskList">{taskList}</ul>
