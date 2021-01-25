@@ -297,8 +297,8 @@ class App extends React.Component<{},AppState> {
                     tempMsgBanner.show=false;
                     this.setState({msgBanner:tempMsgBanner});
                 },2000);
-            } catch {
-                console.log('failed to update user name.');
+            } catch(error) {
+                throw(error);
             }
         }
         // if logged in
@@ -311,9 +311,7 @@ class App extends React.Component<{},AppState> {
                             <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
                             <div id="nav">
                                 <h1 id="taskTitle">Tasks</h1>
-                                
                                 <Link to='/settings/'>Settings</Link>
-                                
                                 <div className="clear"></div>
                             </div>
                             <NewTaskEntry addTask={addTask} />
