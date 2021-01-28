@@ -37,7 +37,7 @@ export class UserProfile extends React.Component<UserprofileProps,UserprofileSta
             (async () => {
                 const userInfo = await mongoUserCollection.findOne({_id:this.props.user});
                 this.setState({
-                    prettyUsername:userInfo.prettyName,
+                    prettyUsername:userInfo?.prettyName,
                     username:userInfo.username
                 })
             })();

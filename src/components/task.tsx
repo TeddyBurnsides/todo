@@ -11,24 +11,32 @@ interface TaskProps {
     task: ITask;
     deleteTask:(id: string) => void;
     completeTask:(id: string, status:boolean) => void;
-    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string, dueDate: string) => void;
+    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string, dueDate: number) => void;
 }
 interface TaskState {
     editMode:boolean;
     title: string;
+    dueDate: number;
 }
 export class Task extends React.Component<TaskProps,TaskState> {
     constructor(props: any) {
         super(props);
         this.state = {
             editMode:false,
-            title:this.props.task.title // initialize with existing title
+            title:this.props.task.title, // initialize with existing title
+            dueDate: this.props.task.dueDate
         }
-        this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleTitleChange = this.handleTitleChange.bind(this);
+        this.handleDateChange = this.handleDateChange.bind(this);
     }
-    handleInputChange({target}: {target:HTMLInputElement}) {
+    handleTitleChange({target}: {target:HTMLInputElement}) {
         this.setState({
             title: target.value
+        });
+    }
+    handleDateChange({target}: {target:HTMLInputElement}) {
+        this.setState({
+            dueDate: Date.parse(target.value.replace(/-/g,"/"))
         });
     }
     render() {
@@ -40,8 +48,9 @@ export class Task extends React.Component<TaskProps,TaskState> {
             document.querySelector('#blur').classList.toggle('visible');
         }
         // wrapper that allows us to call server routine and update local state
-        const saveTask = async (event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, title: string, dueDate: string) => {
+        const saveTask = async (event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, title: string, dueDate: number) => {
             // call server function in parent component (allows state to be updated)
+            
             this.props.saveTask(event,id,title,dueDate);
             // disable editing mode
             toggleEditMode();
@@ -66,7 +75,7 @@ export class Task extends React.Component<TaskProps,TaskState> {
         }
         // get date to be readable
         const userReadableDate = (date: number) => {
-            if (date == null) return '';
+            // 0 means no date was stored
             if (date === 0) return '';
             let dateObject = new Date(date)
             const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -79,6 +88,8 @@ export class Task extends React.Component<TaskProps,TaskState> {
         }
         // convert string to format readable by date input
         const inputReadableDate = (date:number) => {
+            // 0 means no date
+            if (date===0) return '';
             const dateObject = new Date(date);
             const year = dateObject.getFullYear();
             const month = dateObject.getMonth();
@@ -99,16 +110,21 @@ export class Task extends React.Component<TaskProps,TaskState> {
             return (
                 <li className={`task ${taskClass}`}>
                     <form className="editForm">
-                        <input type="text" value={this.state.title} onChange={this.handleInputChange} />
+                        <input  
+                            type="text" 
+                            value={this.state.title} 
+                            onChange={this.handleTitleChange}
+                        />
                         <div className="details">
                             <label>Due Date:</label>
                             <input 
                                 type="date" 
-                                value={inputReadableDate(this.props.task.dueDate)}
+                                value={inputReadableDate(this.state.dueDate)}
+                                onChange={this.handleDateChange}
                                 />
                             <div className="clear"></div>
                         </div>
-                        <button className="saveButton" onClick={(event) => saveTask(event,id,this.state.title,'12-12-2000')}>Save</button>
+                        <button className="saveButton" onClick={(event) => saveTask(event,id,this.state.title,this.state.dueDate)}>Save</button>
                         <button className="cancelButton" onClick={(event) => cancelTask(event)}>Cancel</button>
                         <button className="deleteButton" onClick={(event) => deleteTask(event,id)}>Delete</button>
                         

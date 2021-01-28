@@ -86,33 +86,33 @@ class App extends React.Component<{},AppState> {
                         this.setState({msgBanner:{show:true,msg:Msgs.missingUser}});
                         throw new Error('Invalid user info');
                     }
-                    // server operation (only send due date if entered)
+                    // handle date weirdness
+                    let localDueDate;
                     if (dueDate !== '') {
-                        // get date string for server storage
-                        const localDueDate=Date.parse(dueDate.replace(/-/g,"/"));
-                        // insert task
-                        const newID = await mongoTaskCollection.insertOne({
-                            title:taskTitle,status:true,complete:false,user:this.state.user,dueDate:localDueDate
-                        });
-                        // update state with new task (for real time updates on page)
-                        this.setState((state) => {
-                            state.tasks.push({
-                                _id:new bson.ObjectId(newID.insertedId.id),title:taskTitle,status:true,complete:false,user:this.state.user,dueDate:localDueDate
-                            });
-                            return {tasks:state.tasks}
-                        });
+                        localDueDate=Date.parse(dueDate.replace(/-/g,"/"));;
                     } else {
-                        const newID = await mongoTaskCollection.insertOne({
-                            title:taskTitle,status:true,complete:false,user:this.state.user
-                        }); 
-                        // update state with new task (for real time updates on page)
-                        this.setState((state) => {
-                            state.tasks.push({
-                                _id:new bson.ObjectId(newID.insertedId.id),title:taskTitle,status:true,complete:false,user:this.state.user
-                            });
-                            return {tasks:state.tasks}
-                        });    
+                        localDueDate=0;
                     }
+                    // insert task on server
+                    const newID = await mongoTaskCollection.insertOne({
+                        title:taskTitle,
+                        status:true,
+                        complete:false,
+                        user:this.state.user,
+                        dueDate:localDueDate
+                    });
+                    // update state with new task (for real time updates on page)
+                    this.setState((state) => {
+                        state.tasks.push({
+                            _id:new bson.ObjectId(newID.insertedId.id),
+                            title:taskTitle,
+                            status:true,
+                            complete:false,
+                            user:this.state.user,
+                            dueDate:localDueDate
+                        });
+                        return {tasks:state.tasks}
+                    });
                     
                     // clear loading animation
                     setTimeout(() => {
@@ -138,8 +138,8 @@ class App extends React.Component<{},AppState> {
                 }));
                 // clear local storage (stop "remembering" user info)
                 localStorage.setItem('user','');
-                // clear any notifications hanging around
-                this.setState({msgBanner: {show:false}});
+                // clear all data
+                this.setState({msgBanner: {show:false}, tasks:[], user:'' });
             } catch(error) {
                 throw(error);
             }
@@ -162,24 +162,33 @@ class App extends React.Component<{},AppState> {
                 throw(error);
             }
         }
-        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string, dueDate: string): Promise<void> => {
+        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string, dueDate: number): Promise<void> => {
             // stop page refresh
             event.preventDefault();
-            console.log(newTitle);
-            console.log(dueDate);
+            
             // server ops
             try {                
                 // get index of task we're removing
                 const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
+                // parse date
+                // date handling
+                let localDueDate;
+                console.log(dueDate);
+                if (isNaN(dueDate)) {
+                    localDueDate=0; // represent no date? 
+                } else {
+                    localDueDate=dueDate;
+                }
                 // update state 
                 this.setState((state) => {
                     state.tasks[index].title=newTitle;
+                    state.tasks[index].dueDate=localDueDate;
                     return {tasks:state.tasks}
                 });
                 // update server
                 await mongoTaskCollection.updateOne(
                     {_id: new bson.ObjectId(id)},
-                    {$set: {'title': newTitle}} // toggle true/false flag
+                    {$set: {'title': newTitle, 'dueDate': localDueDate}} // toggle true/false flag
                 );
             } catch {
                 console.log('Unable to update task.')
