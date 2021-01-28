@@ -11,7 +11,7 @@ interface TaskProps {
     task: ITask;
     deleteTask:(id: string) => void;
     completeTask:(id: string, status:boolean) => void;
-    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
+    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string, dueDate: string) => void;
 }
 interface TaskState {
     editMode:boolean;
@@ -40,9 +40,9 @@ export class Task extends React.Component<TaskProps,TaskState> {
             document.querySelector('#blur').classList.toggle('visible');
         }
         // wrapper that allows us to call server routine and update local state
-        const saveTask = async (event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, title: string) => {
+        const saveTask = async (event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, title: string, dueDate: string) => {
             // call server function in parent component (allows state to be updated)
-            this.props.saveTask(event,id,title);
+            this.props.saveTask(event,id,title,dueDate);
             // disable editing mode
             toggleEditMode();
         }
@@ -77,7 +77,7 @@ export class Task extends React.Component<TaskProps,TaskState> {
             const year = dateObject.getFullYear();
             return day + " " + month + " " + year;
         }
-        
+        // convert string to format readable by date input
         const inputReadableDate = (date:number) => {
             const dateObject = new Date(date);
             const year = dateObject.getFullYear();
@@ -85,7 +85,7 @@ export class Task extends React.Component<TaskProps,TaskState> {
             const day = dateObject.getDate();
             return pad(year,4) + "-" + pad(month+1,2) + "-" + pad(day,2)
         }
-        
+        // pad input with zeros to padLength
         const pad = (input:string|number, padLength:number) => {
             const pad_char = '0';
             const pad = new Array(1 + padLength).join(pad_char);
@@ -108,9 +108,10 @@ export class Task extends React.Component<TaskProps,TaskState> {
                                 />
                             <div className="clear"></div>
                         </div>
-                        <button className="deleteButton" onClick={(event) => deleteTask(event,id)}>Delete</button>
-                        <button className="saveButton" onClick={(event) => saveTask(event,id,this.state.title)}>Save</button>
+                        <button className="saveButton" onClick={(event) => saveTask(event,id,this.state.title,'12-12-2000')}>Save</button>
                         <button className="cancelButton" onClick={(event) => cancelTask(event)}>Cancel</button>
+                        <button className="deleteButton" onClick={(event) => deleteTask(event,id)}>Delete</button>
+                        
                         <div className="clear"></div>
                     </form>           
                 </li>    

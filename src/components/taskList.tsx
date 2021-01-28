@@ -10,7 +10,7 @@ interface TaskListProps {
     tasks:Array<ITask>;
     deleteTask:(id: string) => void;
     completeTask:(id: string, status:boolean) => void;
-    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string) => void;
+    saveTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, id: string, newTitle: string, dueDate: string) => void;
 }
 export class TaskList extends React.Component<TaskListProps> {
     render() {    

@@ -162,10 +162,11 @@ class App extends React.Component<{},AppState> {
                 throw(error);
             }
         }
-        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string): Promise<void> => {
+        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string, dueDate: string): Promise<void> => {
             // stop page refresh
             event.preventDefault();
             console.log(newTitle);
+            console.log(dueDate);
             // server ops
             try {                
                 // get index of task we're removing
