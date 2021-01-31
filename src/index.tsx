@@ -56,7 +56,7 @@ const App = () => {
         }
     },[]);
 
-    // add Task to list
+    // Add a task to the task list
     const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string, dueDate: string): Promise<void> => {
         // prevent page from refreshing
         event.preventDefault(); 
