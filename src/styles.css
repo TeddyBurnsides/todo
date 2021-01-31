@@ -78,7 +78,7 @@ LOADER
     height:35px;
     width:350px;
     position:absolute;
-    top:0px;
+    top:0;
     text-align:center;
 }
 .notification span {
@@ -214,6 +214,7 @@ TASK LIST
 .task .title {
     font-size:14pt;
     line-height:24px;
+    height:24px;
     padding:3px 0 3px 14px;
     float:left;
     letter-spacing:-.4px;

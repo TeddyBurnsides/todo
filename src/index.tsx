@@ -1,5 +1,5 @@
 // Core imports
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route, Switch, Link } from "react-router-dom";
 import * as Realm from 'realm-web';
@@ -13,8 +13,6 @@ import {TaskList} from './components/taskList';
 import {UserProfile} from './components/userProfile';
 // Constants
 import {Constants,Msgs} from './components/constants';
-// Interfaces
-import {ITask} from './components/ITask';
 // Styles
 import './styles.css'
 
@@ -23,310 +21,328 @@ const app = new Realm.App({ id: Constants.appID});
 const mongoTaskCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.taskColl);
 const mongoUserCollection = app.services.mongodb('mongodb-atlas').db(Constants.database).collection(Constants.userColl);
 
-// Main App
-interface AppState {
-    tasks: Array<ITask>;
-    user: string;
-    msgBanner: {show:boolean, msg?:string};
-}
-class App extends React.Component<{},AppState> {
-    constructor(props: never) {
-        super(props);
-        this.state = {
-            tasks:[],
-            user:'',
-            msgBanner: {show:false}
-        }
-    }
-    // fetch task list when reloading
-    componentDidMount() {
-        // get user from local storage and save to state
+const App = () => {
+
+    // initialize state
+    const [tasks, setTasks] = useState([]);
+    const [user, setUser] = useState('');
+    const [msgBanner, setMsgBanner] = useState({show:false,msg:''});
+
+    // run when first loading component
+    useEffect(() => {      
+        // get user from local storage
         const user = localStorage.getItem('user');
-        user != null ? this.setState({user:user}) : console.log('User error');
-        // if we're logged in, then attempt to load posts
         if (user) {
+            // update state
+            setUser(user);
             // start task loading animation
-            this.setState({msgBanner:{show:true,msg:'Loading Tasks'}});
+            setMsgBanner({show:true,msg:'Loading Tasks'});
             // anonymous function to retrieve tasks from server when page loads
             (async () => {
                 try {   
                     // get tasks associated with current user
                     const tasks = await mongoTaskCollection.find({user:user});
                     // load tasks to state
-                    this.setState({tasks:tasks})
+                    console.log(tasks);
+                    setTasks(tasks)
                     // finish task loading animation
-                    this.setState({msgBanner:{show:false,msg:''}});
+                    setMsgBanner({show:false,msg:''});
                 } catch(error) {
                     throw error;
                 }
             })();
+        } else {
+            logout();
+        }
+    },[]);
+
+    // add Task to list
+    const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string, dueDate: string): Promise<void> => {
+        // prevent page from refreshing
+        event.preventDefault(); 
+        // starting loading animation
+        setMsgBanner({show:true,msg:Msgs.addingTask});
+        // don't continue if invalid task
+        if (isInvalidTaskTitle(taskTitle)) {
+            setMsgBanner({show:true,msg:Msgs.invalidTask});
+            // hide the failer banner
+            setTimeout(() => {
+                // modify temp object to maintain existing properties
+                const tempMsgBanner=msgBanner;
+                tempMsgBanner.show=false;
+                setMsgBanner(tempMsgBanner);
+            },2000);
+        } else {
+            // server operations
+            try {
+                // check for valid user info
+                if (user == null) {
+                    setMsgBanner({show:true,msg:Msgs.missingUser});
+                    throw new Error('Invalid user info');
+                }
+                // handle date weirdness
+                let localDueDate;
+                if (dueDate !== '') {
+                    localDueDate=Date.parse(dueDate.replace(/-/g,"/"));;
+                } else {
+                    localDueDate=0;
+                }
+                // insert task on server
+                const newID = await mongoTaskCollection.insertOne({
+                    title:taskTitle,
+                    status:true,
+                    complete:false,
+                    user:user,
+                    dueDate:localDueDate
+                });
+                // update state with new task (for real time updates on page)
+                let tempTasks = tasks;
+                tempTasks.push({
+                    _id:new bson.ObjectId(newID.insertedId.id),
+                    title:taskTitle,
+                    status:true,
+                    complete:false,
+                    user:user,
+                    dueDate:localDueDate
+                });
+                setTasks(tempTasks);
+                
+                // clear loading animation
+                setTimeout(() => {
+                    // modify temp object to maintain existing properties
+                    const tempMsgBanner=msgBanner;
+                    tempMsgBanner.show=false;
+                    setMsgBanner(tempMsgBanner);
+                },300);
+            } catch(error) {
+                throw(error);
+            }
+        }   
+    }
+
+    // check if string is an invalid task title
+    const isInvalidTaskTitle = (taskTitle: string|null) => {
+        if (taskTitle === '' || taskTitle == null) return true;
+        // only white space
+        if (!taskTitle.replace(/\s/g, '').length) return true;
+        return false;
+    }
+
+    // Log out 
+    const logout = async (): Promise<void> => {
+        try {
+            // server operation
+            await app.currentUser?.logOut().then(() => setUser(''));
+            // clear local storage (stop "remembering" user info)
+            localStorage.setItem('user','');
+            // clear all data
+            setMsgBanner({show:false,msg:''});
+            setTasks([]);
+            setUser('');
+        } catch(error) {
+            throw(error);
         }
     }
-    render() {
-        const addTask = async (event: React.MouseEvent<HTMLElement>, taskTitle: string, dueDate: string): Promise<void> => {
-            // prevent page from refreshing
-            event.preventDefault(); 
-            // starting loading animation
-            this.setState({msgBanner:{show:true,msg:Msgs.addingTask}});
-            // don't continue if invalid task
-            if (isInvalidTaskTitle(taskTitle)) {
-                this.setState({msgBanner:{show:true,msg:Msgs.invalidTask}});
-                // hide the failer banner
-                setTimeout(() => {
-                    // modify temp object to maintain existing properties
-                    const tempMsgBanner=this.state.msgBanner;
-                    tempMsgBanner.show=false;
-                    this.setState({msgBanner:tempMsgBanner});
-                },2000);
+
+    // Toggle the complete flag on task
+    const completeTask = async (id: string, status: boolean): Promise<void> => {
+        try {
+            // get index of task we're removing
+            const index = tasks.findIndex((el) => el._id.toString() === id);
+            // set state
+            let tempTasks = [...tasks];
+            tempTasks[index].complete=!status;
+            setTasks(tempTasks);
+            // update task on server
+            await mongoTaskCollection.updateOne(
+                {_id: new bson.ObjectId(id)},
+                {$set: {'complete': !status}} // toggle true/false flag
+            );
+        } catch(error) {
+            throw(error);
+        }
+    }
+
+    // task edited Task
+    const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string, dueDate: number): Promise<void> => {
+        // stop page refresh
+        event.preventDefault();
+        
+        // server ops
+        try {                
+            // get index of task we're removing
+            const index = tasks.findIndex((el) => el._id.toString() === id);
+            // parse date
+            // date handling
+            let localDueDate;
+            console.log(dueDate);
+            if (isNaN(dueDate)) {
+                localDueDate=0; // represent no date? 
             } else {
-                // server operations
+                localDueDate=dueDate;
+            }
+            // update state 
+            const tempTasks=tasks;
+            tempTasks[index].title=newTitle;
+            tempTasks[index].dueDate=localDueDate;
+            setTasks(tempTasks);
+            // update server
+            await mongoTaskCollection.updateOne(
+                {_id: new bson.ObjectId(id)},
+                {$set: {'title': newTitle, 'dueDate': localDueDate}} // toggle true/false flag
+            );
+        } catch(error) {
+            throw(error);
+        }
+    }
+
+    // delete a task
+    const deleteTask = async (id: string): Promise<void> => {
+        try {
+            // get index of task we're removing
+            const index = tasks.findIndex((el) => el._id.toString() === id);
+            // update state
+            const tempTasks = [...tasks];
+            tempTasks.splice(index,1);
+            setTasks(tempTasks);
+            // remove tasks on server
+            await mongoTaskCollection.deleteOne(
+                {_id: new bson.ObjectId(id)}
+            );
+        } catch {
+            console.log('Unable to delete Task.')
+        }
+    }
+
+    // Login 
+    const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
+        // prevent page refresh
+        event.preventDefault();
+        // start banner
+        setMsgBanner({show:true,msg:Msgs.loggingIn});
+        // Create an anonymous credential
+        let credentials=Realm.Credentials.emailPassword(username, password);
+        let userObject = null;
+        let userID = '';
+        try {
+            // Authenticate the user
+            userObject = await app.logIn(credentials);
+            userID = userObject._id; // grab id string
+            // update state to trigger page refresh
+            setUser(userID);
+            // save off to local storage so it will persist on refresh
+            if (userObject != null) localStorage.setItem('user',userID)
+            // reset any warnings messages
+            setMsgBanner({show:false,msg:''});
+        } catch {
+            // trigger warning banner
+            setMsgBanner({show:true,msg:Msgs.failedLogin});
+        }
+        // load posts if login was successful
+        if (userObject) {
+            // start loading posts indicator
+            setMsgBanner({show:true,msg:Msgs.loadingTasks});
+            // get posts from server
+            (async () => {
                 try {
-                    // check for valid user info
-                    if (this.state.user == null) {
-                        this.setState({msgBanner:{show:true,msg:Msgs.missingUser}});
-                        throw new Error('Invalid user info');
-                    }
-                    // handle date weirdness
-                    let localDueDate;
-                    if (dueDate !== '') {
-                        localDueDate=Date.parse(dueDate.replace(/-/g,"/"));;
-                    } else {
-                        localDueDate=0;
-                    }
-                    // insert task on server
-                    const newID = await mongoTaskCollection.insertOne({
-                        title:taskTitle,
-                        status:true,
-                        complete:false,
-                        user:this.state.user,
-                        dueDate:localDueDate
-                    });
-                    // update state with new task (for real time updates on page)
-                    this.setState((state) => {
-                        state.tasks.push({
-                            _id:new bson.ObjectId(newID.insertedId.id),
-                            title:taskTitle,
-                            status:true,
-                            complete:false,
-                            user:this.state.user,
-                            dueDate:localDueDate
-                        });
-                        return {tasks:state.tasks}
-                    });
-                    
-                    // clear loading animation
-                    setTimeout(() => {
-                        // modify temp object to maintain existing properties
-                        const tempMsgBanner=this.state.msgBanner;
-                        tempMsgBanner.show=false;
-                        this.setState({msgBanner:tempMsgBanner});
-                    },300);
-                } catch(error) {
-                    throw(error);
-                }
-            }   
-        }
-        const isInvalidTaskTitle = (taskTitle: string|null) => {
-            if (taskTitle === '' || taskTitle == null) return true;
-            return false;
-        }
-        const logout = async (): Promise<void> => {
-            try {
-                // server operation
-                await app.currentUser?.logOut().then(() => this.setState({
-                    user:''
-                }));
-                // clear local storage (stop "remembering" user info)
-                localStorage.setItem('user','');
-                // clear all data
-                this.setState({msgBanner: {show:false}, tasks:[], user:'' });
-            } catch(error) {
-                throw(error);
-            }
-        }
-        const completeTask = async (id: string, status: boolean): Promise<void> => {
-            try {
-                // get index of task we're removing
-                const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
-                // set state
-                this.setState((state) => {
-                    state.tasks[index].complete=!status;
-                    return {tasks:state.tasks}
-                });
-                // update task on server
-                await mongoTaskCollection.updateOne(
-                    {_id: new bson.ObjectId(id)},
-                    {$set: {'complete': !status}} // toggle true/false flag
-                );
-            } catch(error) {
-                throw(error);
-            }
-        }
-        const saveTask = async (event: React.MouseEvent<HTMLElement>, id: string, newTitle: string, dueDate: number): Promise<void> => {
-            // stop page refresh
-            event.preventDefault();
-            
-            // server ops
-            try {                
-                // get index of task we're removing
-                const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
-                // parse date
-                // date handling
-                let localDueDate;
-                console.log(dueDate);
-                if (isNaN(dueDate)) {
-                    localDueDate=0; // represent no date? 
-                } else {
-                    localDueDate=dueDate;
-                }
-                // update state 
-                this.setState((state) => {
-                    state.tasks[index].title=newTitle;
-                    state.tasks[index].dueDate=localDueDate;
-                    return {tasks:state.tasks}
-                });
-                // update server
-                await mongoTaskCollection.updateOne(
-                    {_id: new bson.ObjectId(id)},
-                    {$set: {'title': newTitle, 'dueDate': localDueDate}} // toggle true/false flag
-                );
-            } catch {
-                console.log('Unable to update task.')
-            }
-        }
-        const deleteTask = async (id: string): Promise<void> => {
-            try {
-                // get index of task we're removing
-                const index = this.state.tasks.findIndex((el) => el._id.toString() === id);
-                // update state
-                this.setState((state) => {
-                    state.tasks.splice(index,1);
-                    return {tasks:state.tasks}
-                });
-                // remove tasks on server
-                await mongoTaskCollection.deleteOne(
-                    {_id: new bson.ObjectId(id)}
-                );
-            } catch {
-                console.log('Unable to delete Task.')
-            }
-        }
-        const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
-            // prevent page refresh
-            event.preventDefault();
-            // start banner
-            this.setState({msgBanner: {show:true,msg:Msgs.loggingIn}});
-            // Create an anonymous credential
-            let credentials=Realm.Credentials.emailPassword(username, password);
-            let user = null;
-            try {
-                // Authenticate the user
-                user = await app.logIn(credentials);
-                // update state to trigger page refresh
-                this.setState({user:user.id});
-                // save off to local storage so it will persist on refresh
-                if (this.state.user != null) localStorage.setItem('user',this.state.user)
-                // reset any warnings messages
-                this.setState({msgBanner:{show:false}})
-            } catch {
-                // trigger warning banner
-                this.setState({msgBanner:{show:true,msg:Msgs.failedLogin}});
-            }
-            // load posts if login was successful
-            if (user) {
-                // start loading posts indicator
-                this.setState({msgBanner:{show:true,msg:Msgs.loadingTasks}});
-                // get posts from server
-                (async () => {
-                    try {
-                        const tasks = await mongoTaskCollection.find({user:this.state.user}); // find non-deleted tasks
-                        this.setState({tasks:tasks})
-                        // finish task loading animation
-                        this.setState({msgBanner:{show:false}});
-                    } catch {
-                        throw new Error('Failed to retrieve tasks');
-                    }
-                })();
-            } else {
-                // if no user, then login failed
-                this.setState({msgBanner: {show:true,msg:Msgs.failedLogin}});
-                // hide warning
-                setTimeout(() => {
-                    // modify temp object to maintain existing properties
-                    const tempMsgBanner=this.state.msgBanner;
-                    tempMsgBanner.show=false;
-                    this.setState({msgBanner:tempMsgBanner});
-                },2000);
-            }
-        }
-        const signUp = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
-            // stop page refresh
-            event.preventDefault();
-            // validate input else showing in progress indicator
-            if (isInvalidPassword(password) || isInvalidUsername(username)) {
-                this.setState({msgBanner: {show:true,msg:Msgs.invalidCreds}});
-            } else {
-                // in progress banner
-                this.setState({msgBanner: {show:true,msg:Msgs.signingUp}});
-                // server request to create user
-                try {
-                    await app.emailPasswordAuth.registerUser(username,password);
-                    // show success banner
-                    this.setState({msgBanner: {show:true,msg:Msgs.successfulSignup}});
+                    const tasks = await mongoTaskCollection.find({user:userID}); // find non-deleted tasks
+                    setTasks(tasks)
+                    // finish task loading animation
+                    setMsgBanner({show:false,msg:''});
                 } catch {
-                    // show failure banner
-                    this.setState({msgBanner: {show:true,msg:Msgs.failedSignup}});
+                    throw new Error('Failed to retrieve tasks');
                 }
-            }
+            })();
+        } else {
+            // if no user, then login failed
+            setMsgBanner({show:true,msg:Msgs.failedLogin});
+            // hide warning
+            setTimeout(() => {
+                // modify temp object to maintain existing properties
+                const tempMsgBanner=msgBanner;
+                tempMsgBanner.show=false;
+                setMsgBanner(tempMsgBanner);
+            },2000);
         }
-        const isInvalidUsername = (username: string|null) => {
-            if (username == null || username === '') return true;
-            return false;
-        }
-        const isInvalidPassword = (password: string|null) => {
-            if (password == null || password.length <= 6) return true;
-            return false
-        }
-        const updateUserName = async (event:React.FormEvent<EventTarget>,userId:string,newName:string): Promise<void> => {
-            // stop page refresh
-            event.preventDefault();
+    }
+
+    // Sign up
+    const signUp = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
+        // stop page refresh
+        event.preventDefault();
+        // validate input else showing in progress indicator
+        if (isInvalidPassword(password) || isInvalidUsername(username)) {
+            setMsgBanner({show:true,msg:Msgs.invalidCreds});
+        } else {
             // in progress banner
-            this.setState({msgBanner: {show:true, msg:Msgs.changingName}})
-            // server ops
+            setMsgBanner({show:true,msg:Msgs.signingUp});
+            // server request to create user
             try {
-                await mongoUserCollection.updateOne(
-                    {_id: userId},
-                    {$set: {'prettyName': newName}} // update user's name
-                );
-                // success banner
-                this.setState({msgBanner: {show: true, msg:Msgs.successfulNameChange}})
-                // hide the success banner
-                setTimeout(() => {
-                    // modify temp object to maintain existing properties
-                    const tempMsgBanner=this.state.msgBanner;
-                    tempMsgBanner.show=false;
-                    this.setState({msgBanner:tempMsgBanner});
-                },2000);
-            } catch(error) {
-                throw(error);
+                await app.emailPasswordAuth.registerUser(username,password);
+                // show success banner
+                setMsgBanner({show:true,msg:Msgs.successfulSignup});
+            } catch {
+                // show failure banner
+                setMsgBanner({show:true,msg:Msgs.failedSignup});
             }
         }
-        // if logged in
-        if (this.state.user) {
-            return (
-                <Router><Switch>
+    }
+
+    // check for invalid username
+    const isInvalidUsername = (username: string|null) => {
+        if (username == null || username === '') return true;
+        return false;
+    }
+
+    // check for invalid password
+    const isInvalidPassword = (password: string|null) => {
+        if (password == null || password.length <= 6) return true;
+        return false
+    }
+
+    // update settings
+    // #TODO: make more generic
+    const updateUserName = async (event:React.FormEvent<EventTarget>,userID:string,newName:string): Promise<void> => {
+        // stop page refresh
+        event.preventDefault();
+        // in progress banner
+        setMsgBanner({show:true,msg:Msgs.changingName});
+        // server ops
+        try {
+            await mongoUserCollection.updateOne(
+                {_id: userID},
+                {$set: {'prettyName': newName}} // update user's name
+            );
+            // success banner
+            setMsgBanner({show:true,msg:Msgs.successfulNameChange});
+            // hide the success banner
+            setTimeout(() => {
+                // modify temp object to maintain existing properties
+                const tempMsgBanner=msgBanner;
+                tempMsgBanner.show=false;
+               setMsgBanner(tempMsgBanner);
+            },2000);
+        } catch(error) {
+            throw(error);
+        }
+    }
+
+    // if logged in
+    if (user) {
+        return (
+            <Router><Switch>
                 <Route path='/' exact
                     render={() => (
                         <div>
                             <div id="blur"></div>
-                            <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
+                            <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
                             <div id="nav">
                                 <h1 id="taskTitle">Tasks</h1>
                                 <Link to='/settings/'>Settings</Link>
                                 <div className="clear"></div>
                             </div>
                             <NewTaskEntry addTask={addTask} />
-                            <TaskList tasks={this.state.tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
+                            <TaskList tasks={tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
                             <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                         </div>
                     )}
@@ -334,24 +350,24 @@ class App extends React.Component<{},AppState> {
                 <Route path='/settings/'
                     render={() => (
                         <div>
-                            <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
-                            <UserProfile updateUserName={updateUserName} user={this.state.user} />
+                            <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
+                            <UserProfile updateUserName={updateUserName} user={user} />
                         </div>       
                     )}        
                 />  
-                </Switch></Router>
-            );
-        // if not logged in
-        } else {
-            return (
-                <div>
-                    <Loader displayFlag={this.state.msgBanner.show} msg={this.state.msgBanner.msg} />
-                    <LogIn logIn={logIn} />
-                    <SignUp signUp={signUp} />
-                </div>
-                
-            );
-        }
+            </Switch></Router>
+        );
+
+    // if not logged in
+    } else {
+        return (
+            <div>
+                <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
+                <LogIn logIn={logIn} />
+                <SignUp signUp={signUp} />
+            </div>
+            
+        );
     }
 }
 

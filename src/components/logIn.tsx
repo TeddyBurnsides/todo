@@ -1,52 +1,44 @@
 // core imports
-import React from 'react';
+import React, {useState} from 'react';
 
-// Log in screen
-interface LoginProps {
+// Log in form
+interface props {
     logIn:(event: React.MouseEvent<HTMLElement,MouseEvent>, username: string, password: string) => void;
 }
-interface LoginState {
-    [key: string]: string;
-}
-export class LogIn extends React.Component<LoginProps,LoginState> {
-    constructor(props: any) {
-        super(props);
-        this.state = {
-            username:'',
-            password:''
-        }
-        this.handleInputChange = this.handleInputChange.bind(this);
+export const LogIn = (props: props) => {
+
+    // initialize state
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
+    // wrappper for main Login function
+    const logIn = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
+        // reset state
+        setUsername('');
+        setPassword('');
+        // call main function
+        props.logIn(event,username,password);
     }
-    handleInputChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            [target.name]: target.value
-        });
-    }
-    render() {
-        const logIn = (event: React.MouseEvent<HTMLElement>, username: string, password: string) => {
-            this.setState({username:'',password:''});
-            this.props.logIn(event,username,password)
-        }
-        return (
-            <form id="loginForm" className="standard">
-                <h1>Log In</h1>
-                <label>Username</label>
-                <input 
-                    name="username"
-                    value={this.state.username}
-                    onChange={this.handleInputChange}
-                    type="text" 
-                />
-                <label>Password</label>
-                <input 
-                    name="password"
-                    value={this.state.password}
-                    onChange={this.handleInputChange}
-                    type="Password" 
-                />
-                <button onClick={(event) => logIn(event,this.state.username,this.state.password)}>Log In</button>
-                <div className="clear"></div>
-            </form>
-        )
-    }
+
+    return (
+        <form id="loginForm" className="standard">
+            <h1>Log In</h1>
+            <label>Username</label>
+            <input 
+                name="username"
+                value={username}
+                onChange={event => setUsername(event.target.value)}
+                type="text" 
+            />
+            <label>Password</label>
+            <input 
+                name="password"
+                value={password}
+                onChange={event => setPassword(event.target.value)}
+                type="Password" 
+            />
+            <button onClick={event => logIn(event,username,password)}>Log In</button>
+            <div className="clear"></div>
+        </form>
+    )
 }

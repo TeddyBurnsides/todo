@@ -2,16 +2,13 @@
 import React from 'react';
 
 // Togglable task completion button
-interface ICompleteButtonProps {
+interface props {
     complete:boolean;
     id: string;
     completeTask:(id: string, status: boolean) => void;
 }
-export class CompleteTaskButton extends React.Component<ICompleteButtonProps> {
-    render() {
-        return (    
-            <button className="completeButton" onClick={() => this.props.completeTask(this.props.id,this.props.complete)}></button>
-        )
-        
-    }
+export const CompleteTaskButton = (props: props) => {
+    return (    
+        <button className="completeButton" onClick={() => props.completeTask(props.id,props.complete)}></button>
+    )
 }

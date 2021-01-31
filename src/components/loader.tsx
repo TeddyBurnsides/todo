@@ -2,29 +2,17 @@
 import React from 'react';
 
 // Generic component to dsplay message while waiting for response from server
-interface LoaderProps {
+interface props {
     displayFlag:boolean;
     msg?:string;
 }
-export class Loader extends React.Component<LoaderProps> {
-    render() {
-        if (this.props.displayFlag) {
-            return (
-                <div className="notification">
-                    <span className="visible">
-                        {this.props.msg}
-                    </span>
-                </div>
-            );
-        } else {
-            return (
-                <div className="notification">
-                    <span>
-                        {this.props.msg}
-                    </span>
-                </div>
-            );
-        }
-        
-    }
+export const Loader = (props: props) => {
+    const visibleClass = (props.displayFlag) ? 'visible' : '';
+    return (
+        <div className="notification">
+            <span className={visibleClass}>
+                {props.msg}
+            </span>
+        </div>
+    );
 }

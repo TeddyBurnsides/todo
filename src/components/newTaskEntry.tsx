@@ -1,70 +1,47 @@
 // core imports
-import React from 'react';
+import React, {useState} from 'react';
 
 // new task entry form
-interface NewTaskEntryProps {
+interface props {
     addTask:(event: React.MouseEvent<HTMLElement,MouseEvent>, taskTitle: string, dueDate: string) => void;
 }
-interface NewTaskEntryState {
-    taskText: string,
-    dueDate?: string
-}
-export class NewTaskEntry extends React.Component<NewTaskEntryProps,NewTaskEntryState> {
-    constructor(props:any) {
-        super(props);
-        this.state = {
-            taskText: '',
-            dueDate: ''
-        }
-        this.handleTitleChange = this.handleTitleChange.bind(this);
-        this.handleDateChange = this.handleDateChange.bind(this);
-    }
-    // update state when input field is edited
-    handleTitleChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            taskText: target.value
-        });
+export const NewTaskEntry = (props: props) => {
+
+    // initialize state
+    const [title, setTitle] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    
+    // wrapper for main add Task function
+    const addTask = (event: React.MouseEvent<HTMLElement>,taskTitle: string, dueDate: string) => {
+        // reset state
+        setTitle('');
+        setDueDate('');
+        // call main function
+        props.addTask(event,taskTitle,dueDate);
     }
 
-    handleDateChange({target}: {target:HTMLInputElement}) {
-        this.setState({
-            dueDate: target.value
-        });
-    }
-    
-    render() {
-        // handle showing/hiding details pane
-        /*const showDetails = () => {
-            let detailsPane = document.querySelector<HTMLElement>('#newTaskEntry');
-            detailsPane.classList.add('visibleDetails');
-        }*/
-        // clear local state (tied to input field) and call parent function to add task
-        const addTask = (event: React.MouseEvent<HTMLElement>,taskTitle: string, dueDate: string) => {
-            this.setState({taskText:'',dueDate:''}); // resets input field
-            this.props.addTask(event,taskTitle,dueDate);
-        }
-        return (
-            <form id="newTaskEntry">
+    return (
+        <form id="newTaskEntry">
+            <input 
+                placeholder="Enter new task..." 
+                type="text" 
+                name="title" 
+                value={title} 
+                onChange={event => setTitle(event.target.value)}
+            />
+            <button onClick={(event) => addTask(event,title,dueDate)}></button>
+            <div className="details">
+                <label>Due Date:</label>
                 <input 
-                    placeholder="Enter new task..." 
-                    type="text" 
-                    name="taskText" 
-                    value={this.state.taskText} 
-                    onChange={this.handleTitleChange}
+                    type="date" 
+                    name="dueDate"
+                    value={dueDate}
+                    onChange={event => setDueDate(event.target.value)}
                 />
-                <button onClick={(event) => addTask(event,this.state.taskText,this.state.dueDate)}></button>
-                <div className="details">
-                    <label>Due Date:</label>
-                    <input 
-                        type="date" 
-                        name="dueDate"
-                        value={this.state.dueDate}
-                        onChange={this.handleDateChange}
-                    />
-                    <div className="clear"></div>
-                </div>
                 <div className="clear"></div>
-            </form>
-        );
-    }
+            </div>
+            <div className="clear"></div>
+        </form>
+    );
+    
 }
