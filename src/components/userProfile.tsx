@@ -10,6 +10,7 @@ const mongoUserCollection = app.services.mongodb('mongodb-atlas').db(Constants.d
 
 // Edit user information
 interface props {
+    deleteAccount:(event:React.FormEvent<EventTarget>,userId:string) => void;
     updateUserName:(event:React.FormEvent<EventTarget>,userId:string,newName:string) => void;
     user:string;
 }
@@ -33,7 +34,7 @@ export const UserProfile = (props: props) => {
         } catch(error) {
             throw(error);
         }
-    },[]);
+    },[props.user]);
 
     return (
         <form className="standard">
@@ -56,8 +57,10 @@ export const UserProfile = (props: props) => {
                 onChange={event => setName(event.target.value)}
             />
             
-            <button onClick={(event) => props.updateUserName(event,props.user,name)}>Save</button>
+            <button className="deleteButton" onClick={(event) => props.deleteAccount(event,props.user)}>Delete Account</button>
+            <button className="saveButton" onClick={(event) => props.updateUserName(event,props.user,name)}>Save</button>
         
+            <div className="clear"></div>
         </form>
     );
 }

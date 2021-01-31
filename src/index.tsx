@@ -43,7 +43,6 @@ const App = () => {
                     // get tasks associated with current user
                     const tasks = await mongoTaskCollection.find({user:user});
                     // load tasks to state
-                    console.log(tasks);
                     setTasks(tasks)
                     // finish task loading animation
                     setMsgBanner({show:false,msg:''});
@@ -327,6 +326,15 @@ const App = () => {
         }
     }
 
+    // delete account
+    const deleteAccount = (event:React.FormEvent<EventTarget>,userID:string) => {
+        // stop refresh
+        event.preventDefault();
+        // server ops
+        
+        console.log(userID);
+    }
+
     // if logged in
     if (user) {
         return (
@@ -351,7 +359,7 @@ const App = () => {
                     render={() => (
                         <div>
                             <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
-                            <UserProfile updateUserName={updateUserName} user={user} />
+                            <UserProfile deleteAccount={deleteAccount} updateUserName={updateUserName} user={user} />
                         </div>       
                     )}        
                 />  

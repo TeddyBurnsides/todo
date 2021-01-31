@@ -291,31 +291,31 @@ TASK EDITING
     cursor:pointer;
     border-radius:4px;
 }
-.editForm .saveButton {
-    background:#1ab0b0; 
+.saveButton {
+    background:#316add;
     color:#fff;
     float:right;
     margin:0 0 0 10px;
 }
-.editForm .saveButton:hover {
-    background:#18a4a4;
+.saveButton:hover {
+    background:#3872e6;
 }
-.editForm .cancelButton {
+.cancelButton {
     background:#eee;
     color:#999;
     float:right;
 }
-.editForm .cancelButton:hover {
+.cancelButton:hover {
     color:#666;
     background:#eaeaea;
 }
-.editForm .deleteButton {
+.deleteButton {
     background:#f75077;
     color:#fff;
     float:left;
     opacity:.7;
 }
-.editForm .deleteButton:hover {
+.deleteButton:hover {
     opacity:1;
 }
 /*
@@ -426,7 +426,6 @@ form.standard input[type="text"]:focus, form.standard input[type="password"]:foc
     border:1px solid #ABC3F2;
 }
 form.standard > button {
-    background:#316add;
     margin:0;
     border:0;
     color:#fff;
@@ -434,9 +433,5 @@ form.standard > button {
     line-height:40px;
     padding:0 14px;
     font-size:12pt;
-    float:right;
     cursor:pointer;
-}
-form.standard > button:hover {
-    background:#3872e6;
 }
