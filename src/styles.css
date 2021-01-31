@@ -209,15 +209,15 @@ TASK LIST
     background-size:40px;
 }
 .task.completed .completeButton {
-    background:#1ab0b0 url('./images/check_white.svg') no-repeat center center;
+    background:#6189da url('./images/check_white.svg') no-repeat center center;
     background-size:40px;
-    border-color:#1ab0b0;
+    border-color:#6189da;
 }
 .task .title {
     font-size:14pt;
     line-height:24px;
-    height:24px;
-    padding:3px 0 3px 14px;
+    min-height:24px;
+    padding:1px 0 5px 14px;
     float:left;
     letter-spacing:-.4px;
     color:#3f527b;
