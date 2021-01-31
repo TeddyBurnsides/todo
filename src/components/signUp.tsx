@@ -36,7 +36,7 @@ export const SignUp = (props: props) => {
                 value={password}
                 onChange={event => setPassword(event.target.value)}
             />
-            <button onClick={event => signUp(event,username,password)}>Sign Up</button>
+            <button className="saveButton" onClick={event => signUp(event,username,password)}>Sign Up</button>
             <div className="clear"></div>
         </form>
     )

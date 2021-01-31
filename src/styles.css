@@ -335,16 +335,18 @@ h1 {
     color:#333;
     font-weight:700;
     letter-spacing:-.5px;
+    padding:0 0 0 30px;
+    background-size:24px;
+    background-position:0 5px;
+    background-repeat:no-repeat;
+    background-image:url('./images/cloud.svg');
 }
 h1#taskTitle {
-    background:url('./images/list.svg') no-repeat 0 3px;
-    background-size:24px;
-    padding-left:30px;
+    background-image:url('./images/list.svg');  
+    background-position-y:4px;
 }
 h1#settingsTitle {
-    background:url('./images/gear_dark.svg') no-repeat 0 3px;
-    background-size:24px;
-    padding-left:30px;
+    background-image:url('./images/gear_dark.svg');
 }
 .backLink { 
     text-decoration:none;

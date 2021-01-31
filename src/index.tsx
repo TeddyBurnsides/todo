@@ -217,51 +217,56 @@ const App = () => {
     const logIn = async (event: React.MouseEvent<HTMLElement>, username: string, password: string): Promise<void> => {
         // prevent page refresh
         event.preventDefault();
-        // start banner
-        setMsgBanner({show:true,msg:Msgs.loggingIn});
-        // Create an anonymous credential
-        let credentials=Realm.Credentials.emailPassword(username, password);
-        let userObject = null;
-        let userID = '';
-        try {
-            // Authenticate the user
-            userObject = await app.logIn(credentials);
-            userID = userObject._id; // grab id string
-            // update state to trigger page refresh
-            setUser(userID);
-            // save off to local storage so it will persist on refresh
-            if (userObject != null) localStorage.setItem('user',userID)
-            // reset any warnings messages
-            setMsgBanner({show:false,msg:''});
-        } catch {
-            // trigger warning banner
-            setMsgBanner({show:true,msg:Msgs.failedLogin});
-        }
-        // load posts if login was successful
-        if (userObject) {
-            // start loading posts indicator
-            setMsgBanner({show:true,msg:Msgs.loadingTasks});
-            // get posts from server
-            (async () => {
-                try {
-                    const tasks = await mongoTaskCollection.find({user:userID}); // find non-deleted tasks
-                    setTasks(tasks)
-                    // finish task loading animation
-                    setMsgBanner({show:false,msg:''});
-                } catch {
-                    throw new Error('Failed to retrieve tasks');
-                }
-            })();
+        // validate input else showing in progress indicator
+        if (isInvalidPassword(password) || isInvalidUsername(username)) {
+            setMsgBanner({show:true,msg:Msgs.invalidCreds});
         } else {
-            // if no user, then login failed
-            setMsgBanner({show:true,msg:Msgs.failedLogin});
-            // hide warning
-            setTimeout(() => {
-                // modify temp object to maintain existing properties
-                const tempMsgBanner=msgBanner;
-                tempMsgBanner.show=false;
-                setMsgBanner(tempMsgBanner);
-            },2000);
+            // start banner
+            setMsgBanner({show:true,msg:Msgs.loggingIn});
+            // Create an anonymous credential
+            let credentials=Realm.Credentials.emailPassword(username, password);
+            let userObject = null;
+            let userID = '';
+            try {
+                // Authenticate the user
+                userObject = await app.logIn(credentials);
+                userID = userObject._id; // grab id string
+                // update state to trigger page refresh
+                setUser(userID);
+                // save off to local storage so it will persist on refresh
+                if (userObject != null) localStorage.setItem('user',userID)
+                // reset any warnings messages
+                setMsgBanner({show:false,msg:''});
+            } catch {
+                // trigger warning banner
+                setMsgBanner({show:true,msg:Msgs.failedLogin});
+            }
+            // load posts if login was successful
+            if (userObject) {
+                // start loading posts indicator
+                setMsgBanner({show:true,msg:Msgs.loadingTasks});
+                // get posts from server
+                (async () => {
+                    try {
+                        const tasks = await mongoTaskCollection.find({user:userID}); // find non-deleted tasks
+                        setTasks(tasks)
+                        // finish task loading animation
+                        setMsgBanner({show:false,msg:''});
+                    } catch {
+                        throw new Error('Failed to retrieve tasks');
+                    }
+                })();
+            } else {
+                // if no user, then login failed
+                setMsgBanner({show:true,msg:Msgs.failedLogin});
+                // hide warning
+                setTimeout(() => {
+                    // modify temp object to maintain existing properties
+                    const tempMsgBanner=msgBanner;
+                    tempMsgBanner.show=false;
+                    setMsgBanner(tempMsgBanner);
+                },2000);
+            }
         }
     }
 

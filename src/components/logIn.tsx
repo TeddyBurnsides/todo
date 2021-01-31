@@ -37,7 +37,7 @@ export const LogIn = (props: props) => {
                 onChange={event => setPassword(event.target.value)}
                 type="Password" 
             />
-            <button onClick={event => logIn(event,username,password)}>Log In</button>
+            <button className="saveButton" onClick={event => logIn(event,username,password)}>Log In</button>
             <div className="clear"></div>
         </form>
     )
