@@ -18,12 +18,13 @@ export const UserProfile = (props: props) => {
 
     // initialize state
     const [name, setName] = useState('');
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState(props.user);
 
     // only run on component load
     useEffect(() => {
         // require user to begin
         if (!props.user) throw new Error('No user!');
+        console.log(props.user);
         // server ops
         try {
             (async () => {
@@ -36,31 +37,48 @@ export const UserProfile = (props: props) => {
         }
     },[props.user]);
 
-    return (
-        <form className="standard">
+    if (name !== '') {
+        return (
+            <form className="standard">
 
-            <Link className="backLink" to='/'><button>← Return to tasks</button></Link>
+                <Link className="backLink" to='/'><button>← Return to tasks</button></Link>
+                
+                <div id="nav">
+                    <h1 id="settingsTitle">Settings</h1>
+                    <div className="clear"></div>
+                </div>
+                
+                <label>Username</label>
+                <input type="text" value={username} disabled />
+
+                <label>Full Name</label>
+                <input
+                    type="text"
+                    value={name}
+                    name="name"
+                    onChange={event => setName(event.target.value)}
+                />
+                
+                <button className="deleteButton" onClick={(event) => props.deleteAccount(event,props.user)}>Delete Account</button>
+                <button className="saveButton" onClick={(event) => props.updateUserName(event,props.user,name)}>Save</button>
             
-            <div id="nav">
-                <h1 id="settingsTitle">Settings</h1>
                 <div className="clear"></div>
-            </div>
-            
-            <label>Username</label>
-            <input type="text" value={username} disabled />
+            </form>
+        );
+    } else {
+        return (
+            <form className="standard">
 
-            <label>Full Name</label>
-            <input
-                type="text"
-                value={name}
-                name="name"
-                onChange={event => setName(event.target.value)}
-            />
-            
-            <button className="deleteButton" onClick={(event) => props.deleteAccount(event,props.user)}>Delete Account</button>
-            <button className="saveButton" onClick={(event) => props.updateUserName(event,props.user,name)}>Save</button>
-        
-            <div className="clear"></div>
-        </form>
-    );
+                <Link className="backLink" to='/'><button>← Return to tasks</button></Link>
+                
+                <div id="nav">
+                    <h1 id="settingsTitle">Settings</h1>
+                    <div className="clear"></div>
+                </div>
+                
+                <div className="loadingText">Loading settings...</div>
+
+            </form>
+        );
+    }
 }

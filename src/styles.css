@@ -60,6 +60,9 @@ table {
 .clear {
     clear:both;
 }
+:root {
+    --pageWidth:calc(100% - 100px);
+}
 /*
 BODY
 */
@@ -67,7 +70,8 @@ BODY
     background:#fff;
     font:11pt/1 'Lato', 'Avenir','Helvetica Neue','Helvetica',Arial;
     padding:50px 50px 50px 50px;
-    width:370px;
+    width:calc(100% - 100px);
+    max-width:600px;
     margin:0 auto;
 }
 button,input {
@@ -78,9 +82,10 @@ LOADER
 */
 .notification {
     height:35px;
-    width:350px;
+    width:100%;
     position:absolute;
     top:0;
+    left:0;
     text-align:center;
 }
 .notification span {
@@ -221,7 +226,7 @@ TASK LIST
     float:left;
     letter-spacing:-.4px;
     color:#3f527b;
-    width:290px;
+    width:calc(100% - 80px);
 }
 .task.completed .title {
     color:#a7b6d2;
@@ -261,8 +266,9 @@ TASK EDITING
     padding:14px;
     border-radius:6px;
     background:#fff;
-    position:absolute;
+    position:relative;
     z-index:200;
+    width:calc(100% - 28px);
     box-shadow:0 5px 15px rgba(0,0,0,.1);
 }
 .editForm .details {
@@ -284,7 +290,7 @@ TASK EDITING
     color:#316add;
 }
 .editForm button {
-    height:30px;
+    height:40px;
     border:0;
     padding:0 14px;
     font-size:11pt;
@@ -313,10 +319,10 @@ TASK EDITING
     background:#f75077;
     color:#fff;
     float:left;
-    opacity:.7;
+    opacity:.4;
 }
 .deleteButton:hover {
-    opacity:1;
+    opacity:.7;
 }
 /*
 LOGIN AND SIGNUP
@@ -436,4 +442,12 @@ form.standard > button {
     padding:0 14px;
     font-size:12pt;
     cursor:pointer;
+}
+
+.loadingText {
+    font-style:italic;
+    color:#666;
+    text-align:center;
+    font-size:11pt;
+    line-height:100px;
 }

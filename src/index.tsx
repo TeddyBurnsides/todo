@@ -35,16 +35,16 @@ const App = () => {
         if (user) {
             // update state
             setUser(user);
-            // start task loading animation
-            setMsgBanner({show:true,msg:'Loading Tasks'});
             // anonymous function to retrieve tasks from server when page loads
             (async () => {
                 try {   
+                    // start loading posts indicator
+                    setMsgBanner({show:true,msg:Msgs.loadingTasks});
                     // get tasks associated with current user
                     const tasks = await mongoTaskCollection.find({user:user});
                     // load tasks to state
                     setTasks(tasks)
-                    // finish task loading animation
+                    // hide loading posts indicator
                     setMsgBanner({show:false,msg:''});
                 } catch(error) {
                     throw error;
@@ -230,6 +230,7 @@ const App = () => {
             try {
                 // Authenticate the user
                 userObject = await app.logIn(credentials);
+                console.log(userObject);
                 userID = userObject._id; // grab id string
                 // update state to trigger page refresh
                 setUser(userID);
@@ -355,7 +356,13 @@ const App = () => {
                                 <div className="clear"></div>
                             </div>
                             <NewTaskEntry addTask={addTask} />
-                            <TaskList tasks={tasks} deleteTask={deleteTask} completeTask={completeTask} saveTask={saveTask} />    
+                            <TaskList 
+                                tasks={tasks} 
+                                loadingStatus={msgBanner.show}
+                                deleteTask={deleteTask} 
+                                completeTask={completeTask} 
+                                saveTask={saveTask} 
+                            />    
                             <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                         </div>
                     )}
