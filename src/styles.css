@@ -72,6 +72,7 @@ BODY
     padding:50px 50px 50px 50px;
     width:calc(100% - 100px);
     max-width:600px;
+    min-width:440px;
     margin:0 auto;
 }
 button,input {
@@ -198,9 +199,13 @@ Filters
     background:url('./images/filter.svg') no-repeat left center;
     background-size:20px;
     float:right;
-    padding:0 0 0 32px;
+    padding:0 0 0 22px;
 }
-#filters > button {
+#filters .group {
+    float:left;
+    margin-left:10px;
+}
+#filters button {
     float:right;
     height:26px;
     border:0;
@@ -214,23 +219,23 @@ Filters
     z-index:1;
     cursor:pointer;
 }
-#filters > button:hover {
+#filters button:hover {
     color:#697693;
 }
-#filters > button.active {  
+#filters button.active {  
     color:#555;
     border:1px solid #999;
     z-index:2;
 }
-#filters > button:first-child {
+#filters button:first-child {
     border-top-right-radius:4px;
     border-bottom-right-radius:4px;
 }
-#filters > button:nth-child(2) {
+#filters button:nth-child(2) {
     position:Relative;
     left:1px;
 }
-#filters > button:last-child {
+#filters button:last-child {
     left:2px;
     border-top-left-radius:4px;
     border-bottom-left-radius:4px;
