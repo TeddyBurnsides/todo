@@ -1,7 +1,6 @@
 // core imports 
 import React, {useEffect, useState} from 'react';
 import * as Realm from 'realm-web';
-import {Link} from 'react-router-dom';
 // constants
 import { Constants } from './constants';
 // Connection
@@ -10,7 +9,6 @@ const mongoUserCollection = app.services.mongodb('mongodb-atlas').db(Constants.d
 
 // Edit user information
 interface props {
-    deleteAccount:(event:React.FormEvent<EventTarget>,userId:string) => void;
     updateUserName:(event:React.FormEvent<EventTarget>,userId:string,newName:string) => void;
     user:string;
 }
@@ -24,7 +22,6 @@ export const UserProfile = (props: props) => {
     useEffect(() => {
         // require user to begin
         if (!props.user) throw new Error('No user!');
-        console.log(props.user);
         // server ops
         try {
             (async () => {
@@ -37,48 +34,23 @@ export const UserProfile = (props: props) => {
         }
     },[props.user]);
 
-    if (name !== '') {
-        return (
-            <form className="standard">
+    return (
+        <form className="standard">
+    
+            <label>Username</label>
+            <input type="text" value={username} disabled />
 
-                <Link className="backLink" to='/'><button>← Return to tasks</button></Link>
-                
-                <div id="nav">
-                    <h1 id="settingsTitle">Settings</h1>
-                    <div className="clear"></div>
-                </div>
-                
-                <label>Username</label>
-                <input type="text" value={username} disabled />
-
-                <label>Full Name</label>
-                <input
-                    type="text"
-                    value={name}
-                    name="name"
-                    onChange={event => setName(event.target.value)}
-                />
-                
-                <button className="deleteButton" onClick={(event) => props.deleteAccount(event,props.user)}>Delete Account</button>
-                <button className="saveButton" onClick={(event) => props.updateUserName(event,props.user,name)}>Save</button>
+            <label>Full Name</label>
+            <input
+                type="text"
+                value={name}
+                name="name"
+                onChange={event => setName(event.target.value)}
+            />
             
-                <div className="clear"></div>
-            </form>
-        );
-    } else {
-        return (
-            <form className="standard">
-
-                <Link className="backLink" to='/'><button>← Return to tasks</button></Link>
-                
-                <div id="nav">
-                    <h1 id="settingsTitle">Settings</h1>
-                    <div className="clear"></div>
-                </div>
-                
-                <div className="loadingText">Loading settings...</div>
-
-            </form>
-        );
-    }
+            <button className="saveButton" onClick={(event) => props.updateUserName(event,props.user,name)}>Save</button>
+        
+            <div className="clear"></div>
+        </form>
+    );
 }

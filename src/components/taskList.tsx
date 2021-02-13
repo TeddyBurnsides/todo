@@ -30,6 +30,7 @@ export const TaskList = (props: props) => {
     }
 
     // build list of components from array
+    // filters first on completion status, then due date
     let taskList = props.tasks.filter((task) => {
         if (statusFilter === null) {
             return true;

@@ -1,7 +1,7 @@
 // Core imports
 import React, {useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter as Router, Route, Switch, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Components
@@ -11,6 +11,7 @@ import {Loader} from './components/loader';
 import {NewTaskEntry} from './components/newTaskEntry';
 import {TaskList} from './components/taskList';
 import {UserProfile} from './components/userProfile';
+import {Header} from './components/header';
 // Constants
 import {Constants,Msgs} from './components/constants';
 // Styles
@@ -26,6 +27,7 @@ const App = () => {
     // initialize state
     const [tasks, setTasks] = useState([]);
     const [user, setUser] = useState('');
+    const [name, setName] = useState('');
     const [msgBanner, setMsgBanner] = useState({show:false,msg:''});
 
     // run when first loading component
@@ -35,8 +37,10 @@ const App = () => {
         if (user) {
             // update state
             setUser(user);
-            // anonymous function to retrieve tasks from server when page loads
+            // anonymous function to retrieve data when page loads
             (async () => {
+
+                // get tasks on page load
                 try {   
                     // start loading posts indicator
                     setMsgBanner({show:true,msg:Msgs.loadingTasks});
@@ -49,9 +53,17 @@ const App = () => {
                 } catch(error) {
                     throw error;
                 }
+
+                // get pretty name on page load
+                try {
+                    (async () => {
+                        const userInfo = await mongoUserCollection.findOne({_id:user});
+                        setName(userInfo?.prettyName);
+                    })();
+                } catch(error) {
+                    throw(error);
+                }
             })();
-        } else {
-            logout();
         }
     },[]);
 
@@ -125,22 +137,6 @@ const App = () => {
         // only white space
         if (!taskTitle.replace(/\s/g, '').length) return true;
         return false;
-    }
-
-    // Log out 
-    const logout = async (): Promise<void> => {
-        try {
-            // server operation
-            await app.currentUser?.logOut().then(() => setUser(''));
-            // clear local storage (stop "remembering" user info)
-            localStorage.setItem('user','');
-            // clear all data
-            setMsgBanner({show:false,msg:''});
-            setTasks([]);
-            setUser('');
-        } catch(error) {
-            throw(error);
-        }
     }
 
     // Toggle the complete flag on task
@@ -318,6 +314,8 @@ const App = () => {
                 {_id: userID},
                 {$set: {'prettyName': newName}} // update user's name
             );
+            // trigger header refresh
+            setName(newName);
             // success banner
             setMsgBanner({show:true,msg:Msgs.successfulNameChange});
             // hide the success banner
@@ -325,20 +323,11 @@ const App = () => {
                 // modify temp object to maintain existing properties
                 const tempMsgBanner=msgBanner;
                 tempMsgBanner.show=false;
-               setMsgBanner(tempMsgBanner);
+                setMsgBanner(tempMsgBanner);
             },2000);
         } catch(error) {
             throw(error);
         }
-    }
-
-    // delete account
-    const deleteAccount = (event:React.FormEvent<EventTarget>,userID:string) => {
-        // stop refresh
-        event.preventDefault();
-        // server ops
-        
-        console.log(userID);
     }
 
     // if logged in
@@ -347,31 +336,46 @@ const App = () => {
             <Router><Switch>
                 <Route path='/' exact
                     render={() => (
-                        <div>
+                        <div id="body">
                             <div id="blur"></div>
                             <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
-                            <div id="nav">
-                                <h1 id="taskTitle">Tasks</h1>
-                                <Link to='/settings/'>Settings</Link>
-                                <div className="clear"></div>
+                            <Header 
+                                setUser={setUser}
+                                setTasks={setTasks}
+                                setMsgBanner={setMsgBanner}
+                                name={name}
+
+                            />
+                            <div id="content">
+                                <NewTaskEntry addTask={addTask} />
+                                <TaskList 
+                                    tasks={tasks} 
+                                    loadingStatus={msgBanner.show}
+                                    deleteTask={deleteTask} 
+                                    completeTask={completeTask} 
+                                    saveTask={saveTask} 
+                                />    
+                                
                             </div>
-                            <NewTaskEntry addTask={addTask} />
-                            <TaskList 
-                                tasks={tasks} 
-                                loadingStatus={msgBanner.show}
-                                deleteTask={deleteTask} 
-                                completeTask={completeTask} 
-                                saveTask={saveTask} 
-                            />    
-                            <button id="logoutButton" onClick={() => logout()}>Log Out</button>
                         </div>
                     )}
                 />
                 <Route path='/settings/'
                     render={() => (
-                        <div>
+                        <div id="body">
                             <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
-                            <UserProfile deleteAccount={deleteAccount} updateUserName={updateUserName} user={user} />
+                            <Header 
+                                setUser={setUser}
+                                setTasks={setTasks}
+                                setMsgBanner={setMsgBanner}
+                                name={name}
+                            />
+                            <div id="content">
+                                <UserProfile 
+                                    updateUserName={updateUserName} 
+                                    user={user}
+                                />
+                            </div>
                         </div>       
                     )}        
                 />  
@@ -381,10 +385,13 @@ const App = () => {
     // if not logged in
     } else {
         return (
-            <div>
+            <div id="content">
                 <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
-                <LogIn logIn={logIn} />
-                <SignUp signUp={signUp} />
+                
+                    <LogIn logIn={logIn} />
+                    <SignUp signUp={signUp} />
+                
+                
             </div>
             
         );

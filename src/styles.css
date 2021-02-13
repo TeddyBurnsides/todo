@@ -60,23 +60,84 @@ table {
 .clear {
     clear:both;
 }
-:root {
-    --pageWidth:calc(100% - 100px);
+button,input {
+    font:inherit;
 }
 /*
 BODY
 */
-#root {
-    background:#fff;
-    font:11pt/1 'Lato', 'Avenir','Helvetica Neue','Helvetica',Arial;
-    padding:50px 50px 50px 50px;
-    width:calc(100% - 100px);
-    max-width:600px;
-    min-width:440px;
-    margin:0 auto;
+html {
+    border-top:50px solid #2b3048;
+    background:#fafafa;
+    height:100%;
 }
-button,input {
-    font:inherit;
+body {
+    max-width:800px;
+    min-width:530px; 
+    margin:0 auto;
+    position:relative;
+    top:-50px;
+    height:100%;
+}
+#root {
+    font:11pt/1 'Lato', 'Avenir','Helvetica Neue','Helvetica',Arial;
+    display:flex;
+    overflow:hidden;
+    height:100%;
+}
+#body {
+    width:100%;
+}
+
+/*
+Header
+*/
+#header {
+    height:50px;
+    width:calc(100% - 80px);
+    padding:0 40px;
+    color:rgba(255,255,255,.5);
+    line-height:50px;
+    font-size:10pt;
+    letter-spacing:-.1px;
+}
+#nav {
+    float:left;
+    position:Relative;
+    z-index:100;
+}
+#nav li {
+    float:left;
+
+}
+#nav li a{
+    color:rgba(255,255,255,.5);
+    text-decoration:none;
+    padding:0 20px;
+    line-height:50px;
+    font-weight:700;
+    display:inline-block;
+}
+#nav li a:hover {
+    background:#3b415e;
+    color:rgba(255,255,255,.7);
+}
+#nav li a.active {
+    color:#fff;
+    font-weight:700;
+    background-color:#6189da;
+}
+#header .profile {
+    float:right;
+}
+#header #logoutButton {
+    float:right;
+    margin:0 0 0 20px;
+    color:rgba(255,255,255,.8);
+    cursor:pointer;
+}
+#header #logoutButton:hover {
+    color:#fff;
 }
 /*
 LOADER
@@ -85,8 +146,7 @@ LOADER
     height:35px;
     width:100%;
     position:absolute;
-    top:0;
-    left:0;
+    top:50px;
     text-align:center;
 }
 .notification span {
@@ -107,7 +167,7 @@ LOADER
 NEW TASK FORM
 */
 #newTaskEntry {
-    margin:0 0 40px 0;
+    margin:0 0 20px 0;
     position:relative;
 }
 #newTaskEntry input[type="text"] {
@@ -125,7 +185,7 @@ NEW TASK FORM
 }
 #newTaskEntry button {
     position:absolute;
-    right:0;
+    right:0px;
     top:0;
     width:60px;
     height:50px;
@@ -142,11 +202,12 @@ NEW TASK FORM
 .details {
     float:left;
     width:calc(100% - 30px);
-    border:1px solid #ddd;
+    border:1px solid #ccc;
     border-top:0;
     border-bottom-left-radius:4px;
     border-bottom-right-radius:4px;
     padding:10px 14px;
+    background:#fff;
 }
 .details label {
     float:left;
@@ -190,27 +251,39 @@ Blur element
 #blur.visible {
     visibility: visible;
 }
+
+/*
+Body Content
+*/
+#content {
+    position:Relative;
+    padding:40px;
+    width:calc(100% - 80px);
+}
+
 /*
 Filters
 */
 #filters {
     height:26px;
-    margin:0 0 30px 0;
-    background:url('./images/filter.svg') no-repeat left center;
+    margin:0 0 20px 0;
+    background:url('./images/filter.svg') no-repeat right center;
     background-size:20px;
-    float:right;
-    padding:0 0 0 22px;
+    padding:0 24px 0 0px;
+    display:inline-block;
+    position:relative;
+    left:-2px;
 }
 #filters .group {
     float:left;
-    margin-left:10px;
+    margin-right:10px;
 }
 #filters button {
     float:right;
     height:26px;
     border:0;
     background:#fff;
-    border:1px solid #ddd;
+    border:1px solid #e3e3e3;
     font-size:10pt;
     padding:0 10px;
     color:#aaa;
@@ -223,8 +296,8 @@ Filters
     color:#697693;
 }
 #filters button.active {  
-    color:#555;
-    border:1px solid #999;
+    color: #316add;
+    border: 1px solid #ABC3F2;
     z-index:2;
 }
 #filters button:first-child {
@@ -240,44 +313,56 @@ Filters
     border-top-left-radius:4px;
     border-bottom-left-radius:4px;
 }
+
 /*
 TASK LIST
 */
 #taskList {
-    margin:0 0 50px 0;
+    border-radius:4px;
+    background:#fff;
+    border:1px solid #e3e3e3;
+    margin:0 0px 40px 0px;
 }
 .task {
-    margin:0 0 25px 0;
     min-height:30px;
     position:Relative;
+    padding:10px 20px;
+    border-bottom:1px solid #ddd;
+}
+.task:last-child {
+    border:0;
 }
 .task .completeButton {
-    height:30px;
-    width:30px;
+    height:20px;
+    width:20px;
     background:transparent;
-    border-radius:100px;
+    border-radius:7px;
     float:left;
     cursor:pointer;
     border:2px solid #d4d4d4;
+    margin: 6px 0 0 0;
 }
 .task .completeButton:hover {
     background:url('./images/check.svg') no-repeat center center;
-    background-size:40px;
+    background-size:30px;
 }
 .task.completed .completeButton {
     background:#6189da url('./images/check_white.svg') no-repeat center center;
-    background-size:40px;
+    background-size:30px;
     border-color:#6189da;
 }
 .task .title {
-    font-size:14pt;
-    line-height:24px;
-    min-height:24px;
-    padding:1px 0 5px 14px;
+    font-size:12pt;
+    line-height:30px;
+    height:30px;
+    padding:0 0 0 15px;
     float:left;
     letter-spacing:-.4px;
     color:#3f527b;
-    width:calc(100% - 80px);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    width:calc(100% - 180px);
 }
 .task.completed .title {
     color:#a7b6d2;
@@ -289,23 +374,24 @@ TASK LIST
     font-size:8pt;
     font-weight:700;
     color:#a7b6d2;
-    float:left;
+    position:absolute;
+    right:70px;
+    line-height:30px;
 }
 .task.completed .date {
     color:#ccd7e9;
 }
 .task .options {
-    width: 26px;
-    padding:2px 0;
-    height:26px;
+    width:26px;
+    height:30px;
     background:url('./images/dots.svg') no-repeat right center;
     border:0;
     opacity:.2;
     transition:.1s opacity ease-in-out;
     cursor:pointer;
     position:absolute;
-    right:0;
-    top:0;
+    right:20px;
+    top:10px;
 }
 .task .options:hover {
     opacity:1;
@@ -392,7 +478,7 @@ h1 {
     color:#333;
     font-weight:700;
     letter-spacing:-.5px;
-    padding:0 0 0 30px;
+    padding:0 0 0 35px;
     background-size:24px;
     background-position:0 5px;
     background-repeat:no-repeat;
@@ -427,37 +513,7 @@ h1#settingsTitle {
 .backLink button:hover {
     opacity:1;
 }
-#nav h1 {
-    float:left;
-}
-#nav a {
-    float:right;
-    background:url('./images/gear_dark.svg') no-repeat left center;
-    background-size:16px;
-    padding-left:20px;
-    font-size:10pt;
-    text-decoration:none;
-    line-height:30px;
-    color:#000;
-    opacity:.5;
-    transition:.1s opacity ease-in;
-}
-#nav a:hover {
-    opacity:1;
-}
-#logoutButton {  
-    background:none;
-    border:0;
-    height:20px;
-    padding:0;
-    color:#aaa;
-    cursor:pointer;
-    font-size:10pt;
-    letter-spacing:-.3px;
-}
-#logoutButton:hover {
-    color:#666;
-}
+
 form.standard label {
     display:block;
     color:#999;
