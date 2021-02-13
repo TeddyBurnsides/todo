@@ -59,6 +59,7 @@ const App = () => {
                     (async () => {
                         const userInfo = await mongoUserCollection.findOne({_id:user});
                         setName(userInfo?.prettyName);
+                        localStorage.setItem('prettyName',userInfo?.prettyName);
                     })();
                 } catch(error) {
                     throw(error);
@@ -230,6 +231,8 @@ const App = () => {
                 userID = userObject._id; // grab id string
                 // update state to trigger page refresh
                 setUser(userID);
+                username=userObject._profile.email;
+                localStorage.setItem('username',username);
                 // save off to local storage so it will persist on refresh
                 if (userObject != null) localStorage.setItem('user',userID)
                 // reset any warnings messages
@@ -316,6 +319,8 @@ const App = () => {
             );
             // trigger header refresh
             setName(newName);
+            // update local stroage
+            localStorage.setItem('prettyName',newName);
             // success banner
             setMsgBanner({show:true,msg:Msgs.successfulNameChange});
             // hide the success banner
@@ -343,7 +348,7 @@ const App = () => {
                                 setUser={setUser}
                                 setTasks={setTasks}
                                 setMsgBanner={setMsgBanner}
-                                name={name}
+                                name={name || localStorage.getItem('prettyName')}
 
                             />
                             <div id="content">
@@ -368,12 +373,12 @@ const App = () => {
                                 setUser={setUser}
                                 setTasks={setTasks}
                                 setMsgBanner={setMsgBanner}
-                                name={name}
+                                name={name || localStorage.getItem('prettyName')}
                             />
                             <div id="content">
                                 <UserProfile 
                                     updateUserName={updateUserName} 
-                                    user={user}
+                                    user={user || localStorage.getItem('prettyName')}
                                 />
                             </div>
                         </div>       
@@ -387,13 +392,9 @@ const App = () => {
         return (
             <div id="content">
                 <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
-                
-                    <LogIn logIn={logIn} />
-                    <SignUp signUp={signUp} />
-                
-                
+                <LogIn logIn={logIn} />
+                <SignUp signUp={signUp} />
             </div>
-            
         );
     }
 }

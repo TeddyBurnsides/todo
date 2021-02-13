@@ -20,17 +20,23 @@ export const UserProfile = (props: props) => {
 
     // only run on component load
     useEffect(() => {
-        // require user to begin
-        if (!props.user) throw new Error('No user!');
-        // server ops
-        try {
-            (async () => {
-                const userInfo = await mongoUserCollection.findOne({_id:props.user});
-                setName(userInfo?.prettyName);
-                setUsername(userInfo.username);
-            })();
-        } catch(error) {
-            throw(error);
+        // use local Storage if possible
+        if (localStorage.getItem('prettyName') == null || localStorage.getItem('username') == null) {
+            // require user to begin
+            if (!props.user) throw new Error('No user!');
+            // server ops
+            try {
+                (async () => {
+                    const userInfo = await mongoUserCollection.findOne({_id:props.user});
+                    setName(userInfo?.prettyName);
+                    setUsername(userInfo.username);
+                })();
+            } catch(error) {
+                throw(error);
+            }
+        } else {
+            setUsername(localStorage.getItem('username'));
+            setName(localStorage.getItem('prettyName'));
         }
     },[props.user]);
 

@@ -2,6 +2,7 @@
 import React, {useState} from 'react';
 // components
 import {Task} from './task';
+import {Filters} from './filters';
 // interfaces
 import {ITask} from './ITask';
 
@@ -18,16 +19,6 @@ export const TaskList = (props: props) => {
     //initialize state
     const [statusFilter,setStatusFilter] = useState<boolean | null>(null);
     const [dateFilter,setDateFilter] = useState<number | null>(null);
-
-    // get today's date (or today + offset) in pure number format
-    const today = (offset:number = 0) => {
-        const today = new Date();
-        const dd = String(today.getDate()+offset).padStart(2, '0');
-        const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-        const yyyy = today.getFullYear();
-        const dateString = mm + '/' + dd + '/' + yyyy;
-        return Date.parse(dateString)
-    }
 
     // build list of components from array
     // filters first on completion status, then due date
@@ -59,57 +50,25 @@ export const TaskList = (props: props) => {
     if (taskList.length === 0) {
         return (
             <div>
-                <div id="filters">
-                    <div className="group">
-                        <button className={`${(statusFilter===true) ? 'active' : ''}`} onClick={() => setStatusFilter(true)}>Complete</button>
-                        <button className={`${(statusFilter===false) ? 'active' : ''}`} onClick={() => setStatusFilter(false)}>Incomplete</button>
-                        <button className={`${(statusFilter===null) ? 'active' : ''}`} onClick={() => setStatusFilter(null)}>All</button>
-                    </div>
-                    <div className="group">
-                    <button 
-                            className={`${(dateFilter===today(1)) ? 'active' : '' }`} 
-                            onClick={() => setDateFilter(today(1))}
-                        >Tomorrow</button> 
-                        <button 
-                            className={`${(dateFilter===today()) ? 'active' : '' }`} 
-                            onClick={() => setDateFilter(today())}
-                        >Today</button>
-                        <button 
-                            className={`${(dateFilter===null) ? 'active' : '' }`}
-                            onClick={() => setDateFilter(null)}
-                        >Any</button>
-                        
-                    </div>
-                </div>
+                <Filters
+                    dateFilter={dateFilter}
+                    statusFilter={statusFilter}
+                    setDateFilter={setDateFilter}
+                    setStatusFilter={setStatusFilter}
+                />
                 <div className="clear"></div>
-                <div className="loadingText">No tasks</div>;
+                <div className="loadingText">No tasks</div>
             </div>
         );
     } else {
         return (
             <div>
-                <div id="filters">
-                    <div className="group">
-                        <button className={`${(statusFilter===true) ? 'active' : ''}`} onClick={() => setStatusFilter(true)}>Complete</button>
-                        <button className={`${(statusFilter===false) ? 'active' : ''}`} onClick={() => setStatusFilter(false)}>Incomplete</button>
-                        <button className={`${(statusFilter===null) ? 'active' : ''}`} onClick={() => setStatusFilter(null)}>All</button>
-                    </div>
-                    <div className="group">
-                    <button 
-                            className={`${(dateFilter===today(1)) ? 'active' : '' }`} 
-                            onClick={() => setDateFilter(today(1))}
-                        >Tomorrow</button> 
-                        <button 
-                            className={`${(dateFilter===today()) ? 'active' : '' }`} 
-                            onClick={() => setDateFilter(today())}
-                        >Today</button>
-                        <button 
-                            className={`${(dateFilter===null) ? 'active' : '' }`}
-                            onClick={() => setDateFilter(null)}
-                        >Any</button>
-                        
-                    </div>
-                </div>
+                <Filters
+                    dateFilter={dateFilter}
+                    statusFilter={statusFilter}
+                    setDateFilter={setDateFilter}
+                    setStatusFilter={setStatusFilter}
+                />
                 <div className="clear"></div>
                 <ul id="taskList">{taskList}</ul>
             </div>

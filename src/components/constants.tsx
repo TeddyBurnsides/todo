@@ -6,7 +6,7 @@ export enum Constants {
 }
 export enum Msgs {
     addingTask = 'Adding task...',
-    loadingTasks = 'Loading tasks...',
+    loadingTasks = 'Loading...',
     invalidTask = 'Invalid task!',
     missingUser = 'Not logged in!',
     invalidCreds = 'Incorrect username or password!',
