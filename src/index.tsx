@@ -227,7 +227,7 @@ const App = () => {
             try {
                 // Authenticate the user
                 userObject = await app.logIn(credentials);
-                console.log(userObject);
+
                 userID = userObject._id; // grab id string
                 // update state to trigger page refresh
                 setUser(userID);
@@ -256,6 +256,16 @@ const App = () => {
                         throw new Error('Failed to retrieve tasks');
                     }
                 })();
+                // get pretty Name
+                try {
+                    (async () => {
+                        const userInfo = await mongoUserCollection.findOne({_id:userID});
+                        setName(userInfo?.prettyName);
+                        localStorage.setItem('prettyName',userInfo?.prettyName);
+                    })();
+                } catch(error) {
+                    throw(error);
+                }
             } else {
                 // if no user, then login failed
                 setMsgBanner({show:true,msg:Msgs.failedLogin});
@@ -342,7 +352,6 @@ const App = () => {
                 <Route path='/' exact
                     render={() => (
                         <div id="body">
-                            <div id="blur"></div>
                             <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
                             <Header 
                                 setUser={setUser}

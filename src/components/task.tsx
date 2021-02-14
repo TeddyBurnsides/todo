@@ -26,7 +26,6 @@ export const Task = (props: props) => {
     // toggle Edit Mode
     const toggleEditMode = () => {
         setEditMode(!editMode);
-        document.querySelector('#blur').classList.toggle('visible');
     }
     
     // main function wrapper

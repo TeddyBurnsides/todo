@@ -129,6 +129,11 @@ Header
 }
 #header .profile {
     float:right;
+    max-width:300px;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    white-space:nowrap;
+    height:50px;
 }
 #header #logoutButton {
     float:right;
@@ -233,23 +238,6 @@ NEW TASK FORM
 }
 .details input:focus {
     color:#316add;
-}
-/*
-Blur element
-*/
-#blur {
-    width:100%;
-    height:100%;
-    background:rgba(255,255,255,.7);
-    background:rgba(0,0,0,.4);
-    position:absolute;
-    top:0;
-    left:0;
-    z-index:100;
-    visibility: hidden;
-}
-#blur.visible {
-    visibility: visible;
 }
 
 /*
@@ -400,13 +388,7 @@ TASK LIST
 TASK EDITING
 */
 .editForm {
-    padding:14px;
-    border-radius:6px;
-    background:#fff;
-    position:relative;
-    z-index:200;
-    width:calc(100% - 28px);
-    box-shadow:0 5px 15px rgba(0,0,0,.1);
+    padding:8px 0;
 }
 .editForm .details {
     margin:0 0 14px 0;
@@ -466,7 +448,7 @@ LOGIN AND SIGNUP
 */
 
 #loginForm {
-    margin:0 0 30px 0;
+    margin:50px 0 30px 0;
 }
 /*
 GENERIC FORMS

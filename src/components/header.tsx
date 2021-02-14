@@ -22,7 +22,8 @@ export const Header = (props: props) => {
             // server operation
             await app.currentUser?.logOut().then(() => props.setUser(''));
             // clear local storage (stop "remembering" user info)
-            localStorage.setItem('user','');
+            //localStorage.setItem('user','');
+            localStorage.clear();
             // clear all data
             props.setMsgBanner({show:false,msg:''});
             props.setTasks([]);
@@ -32,6 +33,9 @@ export const Header = (props: props) => {
         }
     }
 
+    // if no name, hide entire string
+    const welcomeString = (props.name) ? `Hello, ${props.name}` : '';
+
     return (
         <div id="header">
             <ul id="nav">
@@ -39,7 +43,7 @@ export const Header = (props: props) => {
                 <li><NavLink activeClassName='active' to='/settings/'>Settings</NavLink></li>
             </ul>
             <div onClick={() => logout()} id="logoutButton">Log Out</div>
-            <div className="profile">Hello, {props.name}</div>
+            <div className="profile">{welcomeString}</div>
             <div className="clear"></div>
         </div>  
     );
