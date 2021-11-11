@@ -402,7 +402,7 @@ const App = () => {
             <div id="content">
                 <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
                 <LogIn logIn={logIn} />
-                <SignUp signUp={signUp} />
+                
             </div>
         );
     }
