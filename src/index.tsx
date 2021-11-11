@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Components
-import {SignUp} from './components/signUp';
 import {LogIn} from './components/logIn';
 import {Loader} from './components/loader';
 import {NewTaskEntry} from './components/newTaskEntry';
