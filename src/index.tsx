@@ -6,6 +6,7 @@ import * as Realm from 'realm-web';
 import bson from 'bson'; // for ObjectID translation
 // Components
 import {LogIn} from './components/logIn';
+import {SignUp} from './components/signUp';
 import {Loader} from './components/loader';
 import {NewTaskEntry} from './components/newTaskEntry';
 import {TaskList} from './components/taskList';
@@ -401,7 +402,7 @@ const App = () => {
             <div id="content">
                 <Loader displayFlag={msgBanner.show} msg={msgBanner.msg} />
                 <LogIn logIn={logIn} />
-                
+                <SignUp signUp={signUp} />
             </div>
         );
     }
